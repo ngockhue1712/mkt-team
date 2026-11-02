@@ -3,12 +3,17 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import worker from '../worker/index.js';
 const page=await readFile(new URL('../ui.html',import.meta.url),'utf8');
-const script=page.match(/<script>([\s\S]*?)<\/script>/)[1];
+const script=await readFile(new URL('../office-ui.js',import.meta.url),'utf8')+'\n'+page.match(/<script>([\s\S]*?)<\/script>/)[1];
+new vm.Script(await readFile(new URL('../voxel-office.js',import.meta.url),'utf8'));
 new vm.Script(script);
 const origin='https://agency.example';
 const post=(body,extra={})=>new Request(origin+'/api/generate',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',...extra},body:JSON.stringify(body)});
 const data={role:'content',context:'Viết một caption',model:'test-model',apiKey:'test-only-key'};
 assert.equal((await worker.fetch(new Request(origin+'/'),{})).status,200);
+for(const [path,type] of [['voxel-office.js','javascript'],['office-ui.js','javascript'],['voxel-ui.css','css']]){
+ const asset=await worker.fetch(new Request(origin+'/assets/'+path+'?v=3'),{});
+ assert.equal(asset.status,200);assert.ok(asset.headers.get('Content-Type').includes(type));assert.ok((await asset.text()).length>1000);
+}
 assert.deepEqual(await (await worker.fetch(new Request(origin+'/api/status'),{})).json(),{configured:false});
 assert.equal((await worker.fetch(post(data,{Origin:'https://evil.example'}),{})).status,403);
 assert.equal((await worker.fetch(post({...data,role:'__proto__'}),{})).status,400);
@@ -25,8 +30,10 @@ try{
 }finally{globalThis.fetch=originalFetch;}
 // Exercise the real client orchestrator, mocking only network/UI/storage.
 const store=new Map();const nodes=new Proxy({}, {get:()=>({innerHTML:'',className:'',textContent:'',classList:{toggle(){}},value:''})});
-const sandbox={console,crypto:globalThis.crypto,Blob,URL,Request,Response,setTimeout,clearTimeout,FormData,localStorage:{getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v)},document:{querySelector:s=>nodes[s],querySelectorAll:()=>[],addEventListener(){}},window:{addEventListener(){},scrollTo(){}},fetch:async()=>Response.json({configured:false})};
+const sandbox={console,crypto:globalThis.crypto,Blob,URL,Request,Response,setTimeout,clearTimeout,FormData,localStorage:{getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v)},document:{getElementById:()=>null,querySelector:s=>nodes[s],querySelectorAll:()=>[],addEventListener(){}},window:{addEventListener(){},scrollTo(){}},fetch:async()=>Response.json({configured:false})};
 vm.createContext(sandbox);vm.runInContext(script,sandbox);vm.runInContext('render=()=>{};toast=()=>{};apiKey="test";',sandbox);
+const nativeCrypto=sandbox.crypto;sandbox.crypto={getRandomValues:a=>nativeCrypto.getRandomValues(a)};
+assert.match(vm.runInContext('orderId()',sandbox),/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);sandbox.crypto=nativeCrypto;
 const outputs={account:JSON.stringify({needs_clarification:false,questions:[],summary:'Đủ brief',departments:['strategy','content'],acceptance:['2 bài']}),strategy:'Chiến lược',content:'Bài 1 và bài 2',qa:JSON.stringify({passed:true,summary:'Đạt',issues:[],checklist:[{criterion:'2 bài',passed:true}]})};
 const calls=[];sandbox.fetch=async(url,opts)=>{const p=JSON.parse(opts.body);calls.push(p);return Response.json({output:outputs[p.role]});};
 await vm.runInContext('(async()=>{state.orders=[{id:"test-order",title:"Campaign",mode:"full",brief:"Brief",deliverables:"2 bài",brand:{},outputs:{},history:[],pipeline:["account"],calls:0}];await execute(state.orders[0]);})()',sandbox);
@@ -34,6 +41,25 @@ assert.equal(vm.runInContext('state.orders[0].status',sandbox),'review');assert.
 // A single-department order must override an over-broad account plan.
 calls.length=0;await vm.runInContext('(async()=>{state.orders=[{id:"single",title:"Caption",mode:"single",department:"content",brief:"Brief",deliverables:"2 bài",brand:{},outputs:{},history:[],pipeline:["account"],calls:0}];await execute(state.orders[0]);})()',sandbox);
 assert.deepEqual(calls.map(c=>c.role),['account','content','qa']);
+// All six visible rooms accept scoped orders, including Account and QA deliverables.
+outputs.account_work='Brief chuẩn hóa và phạm vi công việc';outputs.qa_work='Báo cáo rà soát tài liệu';outputs.creative='Brief thiết kế';outputs.performance='Media plan';
+for(const department of ['account','strategy','content','creative','performance','qa']){
+ calls.length=0;sandbox.department=department;
+ await vm.runInContext('(async()=>{state.orders=[{id:"room",title:"Order riêng",mode:"single",department,brief:"Brief",deliverables:"Theo brief",brand:{},outputs:{},history:[],pipeline:["account"],calls:0}];await execute(state.orders[0]);})()',sandbox);
+ const work=department==='account'?'account_work':department==='qa'?'qa_work':department;
+ assert.deepEqual(calls.map(c=>c.role),['account',work,'qa']);assert.equal(vm.runInContext('state.orders[0].status',sandbox),'review');
+}
+// Home and room intake preserve scope and create real recoverable drafts without a key.
+await vm.runInContext('apiKey="";serverConfigured=false;openConnection=()=>{};state.orders=[];state.uiDrafts={content:{brief:"Draft"},home:{brief:"Home draft"}};',sandbox);
+await vm.runInContext('submitOrder({mode:"single",department:"content",brief:"Viết 5 caption",deliverables:"5 caption",draftScope:"content"})',sandbox);
+assert.equal(vm.runInContext('state.orders[0].department',sandbox),'content');assert.equal(vm.runInContext('state.orders[0].status',sandbox),'draft');assert.equal(vm.runInContext('state.orders[0].calls',sandbox),0);
+assert.equal(vm.runInContext('state.uiDrafts.content',sandbox),undefined);assert.equal(vm.runInContext('state.uiDrafts.home.brief',sandbox),'Home draft');
+await vm.runInContext('submitOrder({mode:"full",brief:"Lên campaign tháng 12",draftScope:"home"})',sandbox);
+assert.equal(vm.runInContext('state.orders[0].mode',sandbox),'full');assert.equal(vm.runInContext('state.orders.length',sandbox),2);
+await vm.runInContext('submitOrder({mode:"full",brief:"  "})',sandbox);assert.equal(vm.runInContext('state.orders.length',sandbox),2);
+await vm.runInContext('state.uiDrafts={content:{brief:"Bản nháp Content",deliverables:"5 bài"},strategy:{brief:"Bản nháp Strategy"}};openRoom("content");openRoom("strategy");',sandbox);
+assert.equal(vm.runInContext('selectedRoom',sandbox),'strategy');assert.equal(vm.runInContext('quickDraft("content").brief',sandbox),'Bản nháp Content');
+vm.runInContext('apiKey="test";',sandbox);
 // Provider failure must preserve completed handoff and resume without rerunning it.
 calls.length=0;sandbox.fetch=async(url,opts)=>{const p=JSON.parse(opts.body);calls.push(p);if(p.role==='content')return Response.json({error:'Quota'},{status:429});return Response.json({output:outputs[p.role]});};
 await vm.runInContext('(async()=>{state.orders=[{id:"retry",title:"Caption",mode:"single",department:"content",brief:"Brief",deliverables:"2 bài",brand:{},outputs:{},history:[],pipeline:["account"],calls:0}];await execute(state.orders[0]);})()',sandbox);
@@ -55,4 +81,17 @@ const adapter=await import('../api/generate.js');
 process.env.OPENAI_API_KEY='owner-key-must-not-be-used';
 assert.equal((await adapter.default.fetch(post({...data,apiKey:''}))).status,428);
 delete process.env.OPENAI_API_KEY;
-console.log('PASS: assertions covering UI syntax, input validation, upstream errors, handoffs, department routing, resume, clarification, QA gate, revision history, draft recovery and public Vercel key isolation. AI network mocked; live AI not tested.');
+// Verify the whole geometric scene fits the supported desktop and mobile stages.
+const drawContext=new Proxy({}, {get:()=>()=>{}});
+const makeElement=()=>({style:{setProperty(){}},dataset:{},classList:{add(){},toggle(){}},setAttribute(){},append(){},getContext:()=>drawContext,addEventListener(){},removeEventListener(){},remove(){}});
+const voxelSandbox={window:{devicePixelRatio:1},document:{createElement:makeElement},ResizeObserver:class{observe(){}disconnect(){}}};
+vm.createContext(voxelSandbox);vm.runInContext(await readFile(new URL('../voxel-office.js',import.meta.url),'utf8'),voxelSandbox);
+for(const [width,height] of [[1224,490],[800,490],[343,270]]){
+ const host={...makeElement(),clientWidth:width,clientHeight:height};const scene=new voxelSandbox.window.VoxelOffice(host,{});
+ for(const box of scene.boxes)for(const dx of [-1,1])for(const dy of [-1,1])for(const dz of [-1,1]){
+  const point=scene.project(box.x+dx*box.w/2,box.y+dy*box.h/2,box.z+dz*box.d/2);
+  assert.ok(point.x>=0&&point.x<=width&&point.y>=0&&point.y<=height,'Voxel geometry clipped at '+width+'×'+height);
+ }
+ scene.select('content');assert.equal(scene.selected,'content');scene.destroy();
+}
+console.log('PASS: assets and UI syntax; six-room routing; home/scoped intake; draft recovery; HTTP UUID fallback; input validation; handoffs; resume; clarification; QA gate; revisions; viewport geometry; Vercel key isolation. AI network mocked; live AI not tested.');

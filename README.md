@@ -4,9 +4,11 @@ Agency marketing AI: đặt campaign trọn gói hoặc order từng phòng; Acc
 
 ## Tính năng
 
+- Voxel Office: văn phòng isometric với sáu phòng bấm được, nhân vật và nội thất voxel; renderer Canvas không tải thư viện ngoài, chỉ vẽ lại khi tương tác hoặc đổi kích thước.
+- Home nhận brief chung để Account phân công; bấm phòng mở form order riêng. Brief đang soạn được lưu riêng cho từng phòng và Home, giữ khi chuyển phòng hoặc tải lại.
 - Brief, deliverables, deadline, ngân sách và tham khảo .txt/.md.
 - Bối cảnh thương hiệu được chụp lại khi tạo order.
-- Account, Strategy, Content, Creative, Performance, QA. Order riêng gọi Account → phòng được chọn → QA; trọn gói chọn phòng liên quan.
+- Account, Strategy, Content, Creative, Performance, QA. Order riêng gọi Account intake → phòng được chọn → QA; Account và QA cũng nhận order riêng qua vai trò bàn giao tách biệt (`account_work`, `qa_work`). Trọn gói chọn phòng liên quan.
 - Sửa theo feedback/QA, lưu phiên bản, duyệt khi QA đạt.
 - Lưu workspace trên trình duyệt, sao lưu/khôi phục JSON và xuất bàn giao Markdown.
 - Lỗi giữ kết quả đã xong và chạy tiếp từ bước thiếu.
@@ -29,7 +31,7 @@ npm test
 npm run validate
 ```
 
-ui.html là giao diện, server.mjs là API/prompt. scripts/compose.mjs nhúng cả hai vào worker/index.js. Build tạo Worker ESM dist/server/index.js; không cần asset bên ngoài. API dùng POST https://api.openai.com/v1/responses với store:false, kiểm tra Origin và giới hạn đầu vào/đầu ra.
+ui.html giữ điều phối và màn hình order; office-ui.js xử lý Home/form phòng ban; voxel-office.js dựng cảnh; voxel-ui.css là giao diện. server.mjs chứa API/prompt. scripts/compose.mjs nhúng trang và các asset vào worker/index.js; build tạo dist/server/index.js. Không cần CDN hay thư viện ngoài. Dev server hỗ trợ `--port` và trang `/__qa/mobile` để kiểm tra viewport 390px (không đưa vào Worker production). API dùng POST https://api.openai.com/v1/responses với store:false, kiểm tra Origin và giới hạn đầu vào/đầu ra.
 
 ## Giới hạn thực tế
 
