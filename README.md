@@ -42,3 +42,11 @@ Kiểm thử dùng mock tại ranh giới AI để xác nhận điều phối, c
 ## Triển khai
 
 Site riêng tư được tạo riêng và dùng cùng mã nguồn này. .openai/hosting.json gắn với Site đó; không dùng lại project_id cho Site khác. Repo GitHub giúp tiếp tục phát triển độc lập với lỗi xuất bản môi trường Codex. Build/deploy website không sửa lỗi publish môi trường Codex.
+
+## Vercel public deployment
+
+Import repository `ngockhue1712/mkt-team` into Vercel. The root `vercel.json` sets framework Other, build `node scripts/build-vercel.mjs`, static output `public`, and Node.js API functions in `api/`. No build-time credentials are required.
+
+Public visitors see the UI and use their own OpenAI API key for generation. Vercel functions deliberately ignore a server OPENAI_API_KEY so anonymous visitors cannot spend the owner's credits. Local workspace data is per browser/origin; existing Sites data is not automatically migrated. Export/import JSON to migrate.
+
+This configuration has local adapter tests; a successful Vercel deployment still requires a connected Vercel account and hosted verification.

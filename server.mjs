@@ -18,6 +18,7 @@ export default {async fetch(request,env){
  if(!request.headers.get('content-type')?.startsWith('application/json'))return json({error:'Yêu cầu JSON.'},415);
  const raw=await request.text();if(raw.length>220000)return json({error:'Brief quá dài. Vui lòng rút gọn.'},413);
  let data;try{data=JSON.parse(raw);}catch{return json({error:'JSON không hợp lệ.'},400);}
+ if(!data||typeof data!=='object'||Array.isArray(data))return json({error:'Yêu cầu phải là một JSON object.'},400);
  const {role,context,model}=data;
  if(!Object.hasOwn(rules,role)||typeof context!=='string'||!context.trim()||context.length>180000)return json({error:'Phòng ban hoặc nội dung không hợp lệ.'},400);
  const key=env.OPENAI_API_KEY||(typeof data.apiKey==='string'?data.apiKey.trim():'');

@@ -5,3 +5,5 @@ node_modules/
 !.env.example
 .sites-runtime/
 *.log
+public/
+.vercel/
