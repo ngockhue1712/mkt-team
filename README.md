@@ -4,7 +4,7 @@ Agency marketing AI: đặt campaign trọn gói hoặc order từng phòng; Acc
 
 ## Tính năng
 
-- Voxel Office: văn phòng isometric với sáu phòng bấm được, nhân vật và nội thất voxel; renderer Canvas không tải thư viện ngoài, chỉ vẽ lại khi tương tác hoặc đổi kích thước.
+- Pixel scrapbook office: văn phòng isometric với sáu phòng bấm được, đội ngũ cún pixel, giấy cắt dán và bảng màu kem–hồng bụi–xanh xám. Renderer Canvas không tải thư viện ngoài, chỉ vẽ lại khi tương tác hoặc đổi kích thước.
 - Home nhận brief chung để Account phân công; bấm phòng mở form order riêng. Brief đang soạn được lưu riêng cho từng phòng và Home, giữ khi chuyển phòng hoặc tải lại.
 - Brief, deliverables, deadline, ngân sách và tham khảo .txt/.md.
 - Bối cảnh thương hiệu được chụp lại khi tạo order.
