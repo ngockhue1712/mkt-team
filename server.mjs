@@ -81,6 +81,23 @@ async function runProvider({ role, context, key, model }) {
   return json({output,usage:body.usage || null,department:departments[role]});
 }
 
+async function checkModelAccess(key, model) {
+  try {
+    const response = await fetch('https://api.openai.com/v1/models/' + encodeURIComponent(model.trim()), {
+      headers: { Authorization:'Bearer ' + key }, signal:AbortSignal.timeout(15000)
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      if (response.status === 403) return json({ error:'Key không có quyền đọc thông tin model. Nếu key có quyền tạo Responses, bạn vẫn có thể lưu kết nối và thử chạy order.' },403);
+      return providerError(response,body);
+    }
+    if (!body || typeof body.id !== 'string' || body.object !== 'model') return json({error:'OpenAI chưa xác nhận được model.'},502);
+    return json({model:body.id});
+  } catch {
+    return json({error:'Chưa kết nối được OpenAI để kiểm tra model. Bạn có thể thử lại.'},502);
+  }
+}
+
 export default {async fetch(request,env){
  const url=new URL(request.url);
  if(request.method==='GET'&&url.pathname==='/assets/office-ui.js')return new Response(OFFICE_UI_JS,{headers:{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'}});
@@ -88,7 +105,7 @@ export default {async fetch(request,env){
  if(request.method==='GET'&&url.pathname==='/assets/voxel-office.js')return new Response(OFFICE_JS,{headers:{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'}});
  if(request.method==='GET'&&url.pathname==='/api/status')return json({configured:!!env.OPENAI_API_KEY});
  if(request.method==='GET'&&url.pathname==='/')return new Response(HTML,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'"}});
- if(url.pathname!=='/api/generate')return json({error:'Không tìm thấy.'},404);
+ if(!['/api/generate','/api/connection'].includes(url.pathname))return json({error:'Không tìm thấy.'},404);
  if(request.method!=='POST')return json({error:'Method not allowed'},405);
  if(request.headers.get('Origin')!==url.origin)return json({error:'Origin không hợp lệ.'},403);
  if(!request.headers.get('content-type')?.startsWith('application/json'))return json({error:'Yêu cầu JSON.'},415);
@@ -96,10 +113,11 @@ export default {async fetch(request,env){
  let data;try{data=JSON.parse(raw);}catch{return json({error:'JSON không hợp lệ.'},400);}
  if(!data||typeof data!=='object'||Array.isArray(data))return json({error:'Yêu cầu phải là một JSON object.'},400);
  const {role,context,model}=data;
- if(!Object.hasOwn(rules,role)||typeof context!=='string'||!context.trim()||context.length>180000)return json({error:'Phòng ban hoặc nội dung không hợp lệ.'},400);
+ if(url.pathname==='/api/generate'&&(!Object.hasOwn(rules,role)||typeof context!=='string'||!context.trim()||context.length>180000))return json({error:'Phòng ban hoặc nội dung không hợp lệ.'},400);
  const key=env.OPENAI_API_KEY||(typeof data.apiKey==='string'?data.apiKey.trim():'');
  if(!key)return json({error:'Chưa kết nối AI. Mở Kết nối AI và nhập API key.'},428);
  if(typeof model!=='string'||!model.trim()||model.length>100)return json({error:'Cần nhập model ID hợp lệ.'},400);
+ if(url.pathname==='/api/connection') return checkModelAccess(key,model);
  try {
    return await runProvider({role,context,key,model});
  } catch (error) {

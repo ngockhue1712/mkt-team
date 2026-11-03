@@ -60,7 +60,7 @@ function intakePanel(order) {
         (apiKey || serverConfigured ? ' <button class="btn small" id="startDraft">Chạy bằng AI đã kết nối</button>' : '') : '') + '</section>';
   }
   if (order.status === 'sending_brief') return '<div class="hint" role="status">Đang gửi brief đến agency…</div>';
-  if (order.status === 'draft' || order.status === 'not_sent') {
+  if (order.status === 'draft' || order.status === 'not_sent' || order.status === 'error') {
     return '<section class="panel intake-receipt"><h2>Brief chưa gửi</h2><p>' +
       esc(order.intakeError || 'Brief hiện nằm trên thiết bị này. Gửi để agency nhận được yêu cầu.') +
       '</p><button type="button" class="btn primary small" id="sendBriefAgain">Gửi brief cho agency</button></section>';
@@ -71,6 +71,7 @@ async function sendAgencyBrief(order) {
   if (pendingBriefs.has(order.id) || order.receivedAt) return;
   pendingBriefs.add(order.id);
   order.status = 'sending_brief';
+  order.error = null;
   order.intakeError = '';
   save();
   if (activeId === order.id) render();

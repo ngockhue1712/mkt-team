@@ -51,6 +51,13 @@ try{
    const r=await worker.fetch(post({...data,role:'qa'}),{});
    const b=await r.json();assert.equal(n,1);assert.ok(b.error.includes(expected));assert.ok(b.error.includes('req_example'));assert.ok(!b.error.includes('Private context'));
  }
+ let probeCalls=0;
+ globalThis.fetch=async(url,init)=>{
+   probeCalls++;assert.equal(url,'https://api.openai.com/v1/models/test-model');assert.equal(init.body,undefined);
+   assert.equal(init.headers.Authorization,'Bearer test-key');return Response.json({object:'model',id:'test-model'});
+ };
+ const probe=new Request(origin+'/api/connection',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({apiKey:'test-key',model:'test-model'})});
+ assert.deepEqual(await (await worker.fetch(probe,{})).json(),{model:'test-model'});assert.equal(probeCalls,1);
 }finally{globalThis.fetch=originalFetch;}
 // Exercise the real client orchestrator, mocking only network/UI/storage.
 const store=new Map();const nodes=new Proxy({}, {get:()=>({innerHTML:'',className:'',textContent:'',classList:{toggle(){}},value:''})});
