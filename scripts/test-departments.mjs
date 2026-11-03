@@ -81,3 +81,17 @@ assert.equal(revised.status,200);await drain();
 assert.equal(savedJob().version,2);assert.equal(savedJob().status,'review');assert.ok(savedJob().outputs.qa);
 assert.equal(await dispatchOrder(coldId,credential,{env:{VERCEL_ENV:'preview'},send:()=>assert.fail()}),false);
 console.log('PASS: browser-independent receipt to six outputs, retry, duplicate delivery and revision.');
+
+const interrupted=savedJob();
+delete interrupted.outputs.qa;
+interrupted.status='running';interrupted.runningRole='qa';
+write('outcomes/'+coldId+'.json',JSON.stringify(interrupted));
+let qaAttempts=0;
+services.infer=async input=>{
+  assert.match(input.prompt,/STRATEGY:/);assert.match(input.prompt,/PERFORMANCE:/);
+  if(!qaAttempts++)throw new DOMException('Inference time limit','TimeoutError');
+  return 'ĐẠT. Đã đối chiếu các đầu ra.';
+};
+await kick();await drain();
+assert.equal(qaAttempts,2);assert.equal(savedJob().status,'review');
+console.log('PASS: timed-out QA resumes without the customer or repeating completed roles.');
