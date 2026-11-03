@@ -42,10 +42,10 @@ write('briefs/'+scoped+'.json',JSON.stringify({brief:{id:scoped,mode:'single',de
 let generated=0;const phases=[];
 while(true) {
   const response=await runAgencyRequest(new Request('https://mkt.example/api/work',{method:'POST',headers:{origin:'https://mkt.example','content-type':'application/json'},body:JSON.stringify({id:scoped,action:'advance'})}),
-  {storage,authorize:async()=>true,infer:async({prompt})=>{generated++;phases.push(prompt);return 'Đạt tiêu chí bài viết.\nẢnh: Lá sen.';}});
+  {storage,authorize:async()=>true,infer:async({prompt})=>{generated++;phases.push(prompt);return prompt.includes('bức ảnh')?'Chụp lá sen cạnh ấm trà dưới ánh sáng sớm.':'Trong buổi sáng đầu tuần hãy dành cho mình một khoảng lặng với tách trà sen thơm nhẹ trên bàn. Cùng bạn bè chia sẻ một câu chuyện nhỏ bên ấm trà để bắt đầu ngày mới theo một cách riêng.';}});
   const {job:scopedJob}=await response.json();if(scopedJob.status==='review'){
-    assert.equal(scopedJob.calls,5);assert.equal(scopedJob.captions.length,3);assert.match(scopedJob.outputs.content,/Caption 3/);break;}
-  assert.ok(generated<=5);
+    assert.equal(scopedJob.calls,8);assert.equal(scopedJob.captions.length,3);assert.match(scopedJob.outputs.content,/Caption 3/);break;}
+  assert.ok(generated<=8);
 }
 assert.ok(phases.at(-1).includes('Caption 3'));
 
