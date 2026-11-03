@@ -20,7 +20,7 @@ const infer=async({system,prompt,schema})=>{
 };
 const step=async(action,feedback='',generate=infer)=>{const response=await runAgencyRequest(new Request('https://mkt.example/api/work',{
   method:'POST',headers:{origin:'https://mkt.example','content-type':'application/json'},body:JSON.stringify({id,action,feedback,version:1})
-}),{storage,infer:generate});return {code:response.status,...await response.json()};};
+}),{storage,infer:generate,authorize:async()=>true});return {code:response.status,...await response.json()};};
 assert.equal((await step('approve')).code,409);
 let resolveStart,release;
 const started=new Promise(r=>resolveStart=r),done=new Promise(r=>release=r);
@@ -42,9 +42,12 @@ write('briefs/'+scoped+'.json',JSON.stringify({brief:{id:scoped,mode:'single',de
 let generated=0;const phases=[];
 while(true) {
   const response=await runAgencyRequest(new Request('https://mkt.example/api/work',{method:'POST',headers:{origin:'https://mkt.example','content-type':'application/json'},body:JSON.stringify({id:scoped,action:'advance'})}),
-  {storage,infer:async({prompt})=>{generated++;phases.push(prompt);return 'Đạt tiêu chí bài viết.\nẢnh: Lá sen.';}});
+  {storage,authorize:async()=>true,infer:async({prompt})=>{generated++;phases.push(prompt);return 'Đạt tiêu chí bài viết.\nẢnh: Lá sen.';}});
   const {job:scopedJob}=await response.json();if(scopedJob.status==='review'){
     assert.equal(scopedJob.calls,5);assert.equal(scopedJob.captions.length,3);assert.match(scopedJob.outputs.content,/Caption 3/);break;}
   assert.ok(generated<=5);
 }
 assert.ok(phases.at(-1).includes('Caption 3'));
+
+const denied=await runAgencyRequest(new Request('https://mkt.example/api/work',{method:'POST',headers:{origin:'https://mkt.example','content-type':'application/json'},body:JSON.stringify({id,action:'status'})}),{storage,infer,authorize:async()=>false});
+assert.equal(denied.status,403);

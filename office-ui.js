@@ -88,6 +88,7 @@ async function sendAgencyBrief(order) {
     if (!response.ok) throw new Error(receipt.error || 'Chưa nhận được biên nhận.');
     if (receipt.id !== order.id || !Number.isFinite(Date.parse(receipt.receivedAt))) throw new Error('Biên nhận không hợp lệ.');
     order.receivedAt = receipt.receivedAt;
+    order.workToken = receipt.workToken;
     order.status = 'received';
     received = true;
   } catch (error) {
@@ -168,10 +169,18 @@ async function runOfficeOrder(order, action='advance', feedback='') {
   if(action==='advance') {order.status='running';order.runningRole=order.pipeline.find(k=>!order.outputs[k])||'account';}
   save();render();
   try {
+    if(!order.workToken){
+      // Historical receipts predate work tokens. Re-present the unchanged original brief.
+      const fields=['id','mode','department','title','brief','deliverables','deadline','budget','reference','brand'];
+      const renewed=await fetch('/api/briefs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fields.map(k=>[k,order[k]])))});
+      const receipt=await renewed.json();
+      if(!renewed.ok || !receipt.workToken || receipt.id!==order.id)throw Error('Không xác minh được brief gốc trên thiết bị này.');
+      order.workToken=receipt.workToken;save();
+    }
     let next=action;
     while(true) {
       const response=await fetch('/api/work',{
-        method:'POST',headers:{'Content-Type':'application/json'},
+        method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+order.workToken},
         body:JSON.stringify({id:order.id,action:next,feedback,version:order.version||1}),signal:AbortSignal.timeout(310000)
       });
       const body=await response.json().catch(()=>null);

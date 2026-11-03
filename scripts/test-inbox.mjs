@@ -51,7 +51,7 @@ const app = {
     if(!statusAccepted) throw new TypeError('offline');
     const result = await receiveBrief(request(JSON.parse(options.body)),storage);
     if(dropResponse) {dropResponse=false;throw new TypeError('response lost');}
-    return result;
+    return result.ok ? Response.json({...await result.json(),workToken:"test-only-work-token"},{status:result.status}) : result;
   }
 };
 vm.createContext(app);
