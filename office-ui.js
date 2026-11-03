@@ -140,7 +140,7 @@ function bindOffice(){
 function workRole(department){return department==='account'?'account_work':department==='qa'?'qa_work':department;}
 
 function outcomePanel(order) {
-  if (order.engine !== 'office' || !order.outputs.qa || !['review','approved'].includes(order.status)) return '';
+  if (!order.outputs.qa || !['review','approved'].includes(order.status)) return '';
   const roles = order.pipeline.filter(key => key !== 'account' && key !== 'qa');
   const qa = JSON.parse(order.outputs.qa);
   const issues = (qa.issues || []).map(item=>'<li>'+esc(item.issue)+'</li>').join('');

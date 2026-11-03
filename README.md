@@ -52,3 +52,9 @@ Import repository `ngockhue1712/mkt-team` into Vercel. The root `vercel.json` se
 On Vercel, every brief form sends to the private Blob inbox via POST /api/briefs. Visitors do not need a key or login to submit. A receipt confirms storage; uncertain submissions can be retried with the same order ID. The owner can open Vercel Storage → mkt-team-briefs → briefs. Files are private; there is no public listing or read API. Connect a private Blob store to the project with BLOB_STORE_ID for its workload identity. OpenAI generation remains optional. Vercel functions deliberately ignore a server OPENAI_API_KEY so anonymous visitors cannot spend the owner's credits. Local workspace data is per browser/origin; existing Sites data is not automatically migrated. Export/import JSON to migrate.
 
 Production: https://mkt-team-ecru.vercel.app/
+
+### Xử lý order không cần API key
+
+Vercel chạy một mô hình ngôn ngữ mở trên CPU máy chủ. Máy chủ tải trọng số GGUF từ kho Qwen chính thức, kiểm tra kích thước và SHA-256, rồi giữ lại cho các lần chạy trên cùng instance. Lượt đầu có thể lâu hơn. Khách giao riêng một phòng sẽ trải qua Account → phòng đó → QA. Brief toàn agency chạy Strategy, Content, Creative và Performance trước QA. Mỗi bước đọc brief, feedback và phần bàn giao thực tế. Order có số lượng caption rõ ràng được viết từng bài rồi đối chiếu độ dài và yêu cầu ảnh.
+
+Các bản bàn giao, tiến độ, phiên bản và quyết định duyệt được lưu trong thư mục riêng outcomes/ của Blob. Hàm production chuyển tiếp công việc sau mỗi checkpoint; khi mạng hoặc máy chủ gián đoạn, mở lại order để đồng bộ và tiếp tục. Góp ý của QA hiện cùng bản bàn giao để khách quyết định. Model nhỏ trên CPU phù hợp làm bản nháp và không thay thế kiểm chứng thông tin, nghiên cứu thị trường hay thiết kế ảnh thực tế.

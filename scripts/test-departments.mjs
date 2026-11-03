@@ -36,3 +36,15 @@ assert.equal((await step('revise','Đổi CTA')).job.version,2);
 assert.equal((await step('advance','',async()=>{throw Error('injected worker failure')})).job.status,'error');
 assert.equal((await step('advance')).job.status,'running');assert.ok(seen.at(-1).prompt.includes('Đổi CTA'));
 console.log('PASS: six independent role invocations, handoffs, durable review, concurrency, retry and revision.');
+
+const scoped=crypto.randomUUID();
+write('briefs/'+scoped+'.json',JSON.stringify({brief:{id:scoped,mode:'single',department:'content',brief:'Viết 3 caption cho trà sen',deliverables:'Gợi ý ảnh cho mỗi bài',brand:{}}}));
+let generated=0;const phases=[];
+while(true) {
+  const response=await runAgencyRequest(new Request('https://mkt.example/api/work',{method:'POST',headers:{origin:'https://mkt.example','content-type':'application/json'},body:JSON.stringify({id:scoped,action:'advance'})}),
+  {storage,infer:async({prompt})=>{generated++;phases.push(prompt);return 'Đạt tiêu chí bài viết.\nẢnh: Lá sen.';}});
+  const {job:scopedJob}=await response.json();if(scopedJob.status==='review'){
+    assert.equal(scopedJob.calls,5);assert.equal(scopedJob.captions.length,3);assert.match(scopedJob.outputs.content,/Caption 3/);break;}
+  assert.ok(generated<=5);
+}
+assert.ok(phases.at(-1).includes('Caption 3'));
