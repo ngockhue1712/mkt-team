@@ -35,7 +35,7 @@ ui.html giữ điều phối và màn hình order; office-ui.js xử lý Home/fo
 
 ## Giới hạn thực tế
 
-Đây là bản đầu cần tab mở để điều phối, chưa chạy nền 24/7. Đóng tab có thể tiếp tục từ bước thiếu. Deadline là thông tin brief. Dữ liệu trên trình duyệt này, chưa đồng bộ nhiều máy; xuất bản sao thường xuyên.
+Ở bản Worker dùng OpenAI riêng, tab cần mở để điều phối. Trên Vercel production, máy chủ tự chạy công việc sau khi nhận brief. Đóng tab có thể tiếp tục từ bước thiếu. Deadline là thông tin brief. Dữ liệu trên trình duyệt này, chưa đồng bộ nhiều máy; xuất bản sao thường xuyên.
 
 Creative tạo concept, art direction, brief và prompt, chưa render ảnh/video. Research chưa duyệt web, phải đánh dấu giả thuyết. Chưa tích hợp đăng bài/chạy ads/đọc PDF. Không giả lập các tính năng đó bằng kết quả mẫu.
 
@@ -49,7 +49,7 @@ Site riêng tư được tạo riêng và dùng cùng mã nguồn này. .openai/
 
 Import repository `ngockhue1712/mkt-team` into Vercel. The root `vercel.json` sets framework Other, build `node scripts/build-vercel.mjs`, static output `public`, and Node.js API functions in `api/`. No build-time credentials are required.
 
-On Vercel, every brief form sends to the private Blob inbox via POST /api/briefs. Visitors do not need a key or login to submit. A receipt confirms storage; uncertain submissions can be retried with the same order ID. The owner can open Vercel Storage → mkt-team-briefs → briefs. Files are private. Retrieving generated work and submitting review decisions require a separate bearer capability issued on successful intake. There is no public listing. Connect a private Blob store to the project with BLOB_STORE_ID for its workload identity. OpenAI generation remains optional. Vercel functions deliberately ignore a server OPENAI_API_KEY so anonymous visitors cannot spend the owner's credits. Local workspace data is per browser/origin; existing Sites data is not automatically migrated. Export/import JSON to migrate.
+On Vercel, every brief form sends to the private Blob inbox via POST /api/briefs. Visitors do not need a key or login to submit. A receipt confirms storage; uncertain submissions can be retried with the same order ID. The owner can open Vercel Storage → mkt-team-briefs → briefs. Files are private. Retrieving generated work and submitting review decisions require a separate bearer capability issued on successful intake. There is no public listing. Connect a private Blob store to the project with BLOB_STORE_ID for its workload identity. The public customer flow always uses the studio model. Vercel functions deliberately ignore a server OPENAI_API_KEY so anonymous visitors cannot spend the owner's credits. Local workspace data is per browser/origin; existing Sites data is not automatically migrated. Export/import JSON to migrate.
 
 Production: https://mkt-team-ecru.vercel.app/
 
@@ -57,4 +57,4 @@ Production: https://mkt-team-ecru.vercel.app/
 
 Vercel chạy một mô hình ngôn ngữ mở trên CPU máy chủ. Máy chủ tải trọng số GGUF từ kho Qwen chính thức, kiểm tra kích thước và SHA-256, rồi giữ lại cho các lần chạy trên cùng instance. Lượt đầu có thể lâu hơn. Khách giao riêng một phòng sẽ trải qua Account → phòng đó → QA. Brief toàn agency chạy Strategy, Content, Creative và Performance trước QA. Mỗi bước đọc brief, feedback và phần bàn giao thực tế. Order có số lượng caption rõ ràng được viết từng bài rồi đối chiếu độ dài và yêu cầu ảnh.
 
-Các bản bàn giao, tiến độ, phiên bản và quyết định duyệt được lưu trong thư mục riêng outcomes/ của Blob. Hàm production chuyển tiếp công việc sau mỗi checkpoint; khi mạng hoặc máy chủ gián đoạn, mở lại order để đồng bộ và tiếp tục. Góp ý của QA hiện cùng bản bàn giao để khách quyết định. Model nhỏ trên CPU phù hợp làm bản nháp và không thay thế kiểm chứng thông tin, nghiên cứu thị trường hay thiết kế ảnh thực tế.
+Các bản bàn giao, tiến độ, phiên bản và quyết định duyệt được lưu trong thư mục riêng outcomes/ của Blob. Vercel production khởi động phòng đầu tiên trước khi trả biên nhận, tự chuyển tiếp sau mỗi bước và chạy lại sau khi khách góp ý. Khách có thể đóng tab sau khi thấy biên nhận rồi mở Order bằng cùng trình duyệt. Khi mạng hoặc máy chủ gián đoạn, mở lại order để đồng bộ và tiếp tục. Góp ý của QA hiện cùng bản bàn giao để khách quyết định. Model nhỏ trên CPU phù hợp làm bản nháp và không thay thế kiểm chứng thông tin, nghiên cứu thị trường hay thiết kế ảnh thực tế.

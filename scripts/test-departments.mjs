@@ -51,3 +51,33 @@ assert.ok(phases.at(-1).includes('Caption 3'));
 
 const denied=await runAgencyRequest(new Request('https://mkt.example/api/work',{method:'POST',headers:{origin:'https://mkt.example','content-type':'application/json'},body:JSON.stringify({id,action:'status'})}),{storage,infer,authorize:async()=>false});
 assert.equal(denied.status,403);
+
+// After intake, the client disappears. The production dispatch and worker alone
+// must finish all six roles, including a second version after review feedback.
+const {dispatchOrder}=await import('../lib/dispatch-order.mjs');
+const {receiveBrief}=await import('../lib/brief-inbox.mjs');
+const coldId=crypto.randomUUID(),origin='https://mkt.example',credential='test-order-token',pending=[];
+const env={VERCEL_ENV:'production',VERCEL_PROJECT_PRODUCTION_URL:'mkt.example'};
+const accepted=await receiveBrief(new Request(origin+'/api/briefs',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify({id:coldId,mode:'full',brief:'Viết kế hoạch cho hội sách.'})}),storage);
+assert.equal(accepted.status,201);
+const receipt=await accepted.json();
+let deliveries=0;
+const send=async(url,options)=>{
+  assert.equal(new URL(url).origin,origin);
+  if (!deliveries++) return new Response(null,{status:503});
+  return runAgencyRequest(new Request(url,options),services);
+};
+const kick=()=>dispatchOrder(receipt.id,credential,{env,send});
+const services={storage,infer,defer:promise=>pending.push(promise),continueOrder:kick,authorize:async (order,auth)=>order===coldId && auth==='Bearer '+credential};
+assert.equal(await kick(),true);
+async function drain(){while(pending.length)await pending.shift();}
+await drain();
+const savedJob=()=>JSON.parse(files.get('outcomes/'+coldId+'.json').data);
+assert.equal(savedJob().status,'review');
+assert.equal(Object.keys(savedJob().outputs).length,6);
+await kick();await drain();assert.equal(savedJob().calls,6);
+const revised=await send(origin+'/api/work',{method:'POST',headers:{origin,'Content-Type':'application/json',Authorization:'Bearer '+credential},body:JSON.stringify({id:coldId,action:'revise',feedback:'Chuyển sang giọng gần gũi hơn.',version:1})});
+assert.equal(revised.status,200);await drain();
+assert.equal(savedJob().version,2);assert.equal(savedJob().status,'review');assert.ok(savedJob().outputs.qa);
+assert.equal(await dispatchOrder(coldId,credential,{env:{VERCEL_ENV:'preview'},send:()=>assert.fail()}),false);
+console.log('PASS: browser-independent receipt to six outputs, retry, duplicate delivery and revision.');

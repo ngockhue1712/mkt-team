@@ -57,6 +57,8 @@ const app = {
 vm.createContext(app);
 vm.runInContext(script,app);
 vm.runInContext("render=()=>{}; toast=()=>{}; openConnection=()=>{throw Error('Unsolicited API key modal');};",app);
+// Public submissions always use the studio worker, even with an old BYOK session.
+vm.runInContext("apiKey='unused-legacy-key';serverConfigured=true;",app);
 for(const department of ['account','strategy','content','creative','performance','qa']){
   app.department=department;
   const order=await vm.runInContext("submitOrder({mode:'single',department,brief:'Kiểm tra giao việc',draftScope:department})",app);

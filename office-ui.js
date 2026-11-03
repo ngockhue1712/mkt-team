@@ -57,8 +57,8 @@ function intakePanel(order) {
     return '<section class="panel intake-receipt" aria-label="Biên nhận brief"><h2>Agency đã nhận brief</h2><p>Đã gửi đến ' +
       esc(destination) + ' lúc ' + esc(new Date(order.receivedAt).toLocaleString('vi-VN')) +
       '.</p><small>Mã brief · ' + esc(order.id) + '</small>' +
-      (order.status === 'received' ? '<p>Brief đã sẵn sàng để các phòng thực hiện.</p><button class="btn primary" id="runOffice">Thực hiện brief này</button>' :
-        order.engine==='office' && order.status==='running' ? '<p role="status">Đang thực hiện · '+esc(DEPTS[order.runningRole]?.name||'Account')+(order.runningRole==='content' && order.captions?.length?' · Đã viết '+order.captions.length+' caption':'')+'. Kết quả từng phòng sẽ được lưu sau khi hoàn tất.</p>' : '') + '</section>';
+      (order.status === 'received' ? '<p role="status">Agency đang tiếp nhận công việc.</p>' :
+        order.engine==='office' && order.status==='running' ? '<p role="status">Đang thực hiện · '+esc(DEPTS[order.runningRole]?.name||'Account')+(order.runningRole==='content' && order.captions?.length?' · Đã viết '+order.captions.length+' caption':'')+(order.background?'. Bạn có thể đóng trang. Mở lại Order trên trình duyệt này để xem kết quả.</p>':'. Kết quả từng phòng sẽ được lưu sau khi hoàn tất.</p>') : '') + '</section>';
   }
   if (order.status === 'sending_brief') return '<div class="hint" role="status">Đang gửi brief đến agency…</div>';
   if (order.status === 'draft' || order.status === 'not_sent' || order.status === 'error') {
@@ -89,6 +89,7 @@ async function sendAgencyBrief(order) {
     if (receipt.id !== order.id || !Number.isFinite(Date.parse(receipt.receivedAt))) throw new Error('Biên nhận không hợp lệ.');
     order.receivedAt = receipt.receivedAt;
     order.workToken = receipt.workToken;
+    order.background = receipt.background === true;
     order.status = 'received';
     received = true;
   } catch (error) {
@@ -102,10 +103,7 @@ async function sendAgencyBrief(order) {
   }
   if (received) {
     toast('Agency đã nhận brief ' + order.id.slice(0, 8).toUpperCase() + '.');
-    if (!busy) {
-      if (apiKey || serverConfigured) await execute(order);
-      else await runOfficeOrder(order);
-    }
+    if (!busy) await runOfficeOrder(order,order.background?'status':'advance');
   }
 }
 async function copyForChat(order) {
@@ -175,7 +173,7 @@ async function runOfficeOrder(order, action='advance', feedback='') {
       const renewed=await fetch('/api/briefs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fields.map(k=>[k,order[k]])))});
       const receipt=await renewed.json();
       if(!renewed.ok || !receipt.workToken || receipt.id!==order.id)throw Error('Không xác minh được brief gốc trên thiết bị này.');
-      order.workToken=receipt.workToken;save();
+      order.workToken=receipt.workToken;order.background=receipt.background===true;save();
     }
     let next=action;
     while(true) {
@@ -188,8 +186,8 @@ async function runOfficeOrder(order, action='advance', feedback='') {
       applyOfficeResult(order,body.job);save();
       if(activeId===order.id){activeTab=order.runningRole||order.pipeline[1]||'brief';render();}
       if(order.status!=='running')break;
-      if(response.status===202)await new Promise(resolve=>setTimeout(resolve,8500));
-      next='advance';
+      if(order.background || response.status===202)await new Promise(resolve=>setTimeout(resolve,8500));
+      next=order.background && !body.needsAdvance?'status':'advance';
     }
     if(order.status==='review')toast('Các phòng đã bàn giao. Mời bạn xem và duyệt.');
     if(order.status==='approved')toast('Đã lưu quyết định duyệt.');
@@ -197,5 +195,34 @@ async function runOfficeOrder(order, action='advance', feedback='') {
     order.status='error';order.runningRole=null;order.error=error.message;
   } finally {
     busy=false;save();if(activeId===order.id)render();
+  }
+}
+
+function resumeOfficeView(order) {
+  if (!hasAgencyInbox() || !order?.receivedAt || busy) return;
+  if (order.engine==='office' || order.background) runOfficeOrder(order,'status');
+  else if (order.status==='received') runOfficeOrder(order);
+}
+
+let refreshingOfficeList=false;
+async function refreshOfficeList() {
+  if (!hasAgencyInbox() || refreshingOfficeList) return;
+  const pending=state.orders.filter(o=>o.background && o.workToken && ['running','received','error'].includes(o.status));
+  refreshingOfficeList=true;
+  let changed=false;
+  try {
+    for (const order of pending) {
+      const response=await fetch('/api/work',{
+        method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+order.workToken},
+        body:JSON.stringify({id:order.id,action:'status'}),signal:AbortSignal.timeout(12000)
+      });
+      if (!response.ok) continue;
+      const {job}=await response.json();
+      if (job && !(busy && activeId===order.id)) { applyOfficeResult(order,job);changed=true; }
+    }
+  } catch { /* Keep the last saved state until the next visit. */ }
+  finally {
+    refreshingOfficeList=false;
+    if (changed) {save();if(['home','orders','review'].includes(route))render();}
   }
 }
