@@ -205,8 +205,10 @@ function resumeOfficeView(order) {
 }
 
 let refreshingOfficeList=false;
+let officeListTimer;
 async function refreshOfficeList() {
   if (!hasAgencyInbox() || refreshingOfficeList) return;
+  clearTimeout(officeListTimer);
   const pending=state.orders.filter(o=>o.background && o.workToken && ['running','received','error'].includes(o.status));
   refreshingOfficeList=true;
   let changed=false;
@@ -218,11 +220,20 @@ async function refreshOfficeList() {
       });
       if (!response.ok) continue;
       const {job}=await response.json();
-      if (job && !(busy && activeId===order.id)) { applyOfficeResult(order,job);changed=true; }
+      if (job && !(busy && activeId===order.id) && (order.status!==job.status || order.calls!==job.calls || order.version!==job.version || order.runningRole!==job.runningRole)) {
+        applyOfficeResult(order,job);changed=true;
+      }
     }
   } catch { /* Keep the last saved state until the next visit. */ }
   finally {
     refreshingOfficeList=false;
-    if (changed) {save();if(['home','orders','review'].includes(route))render();}
+    const onList=['home','orders','review'].includes(route);
+    if (changed) {
+      save();
+      if(onList && !document.activeElement?.matches('input, textarea, select'))render();
+    }
+    if (onList && pending.some(o=>['received','running'].includes(o.status))) {
+      officeListTimer=setTimeout(refreshOfficeList,15000);
+    }
   }
 }
