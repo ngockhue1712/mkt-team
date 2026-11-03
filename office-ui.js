@@ -144,11 +144,11 @@ function outcomePanel(order) {
   if (!order.outputs.qa || !['review','approved'].includes(order.status)) return '';
   const roles = order.pipeline.filter(key => key !== 'account' && key !== 'qa');
   const qa = JSON.parse(order.outputs.qa);
-  const issues = (qa.issues || []).map(item=>'<li>'+esc(item.issue)+'</li>').join('');
+  const issues = (qa.issues || []).filter(item=>item.issue!==qa.summary).map(item=>'<li>'+esc(item.issue)+'</li>').join('');
   return '<section class="panel delivery" aria-label="Bản bàn giao"><span class="eyebrow">BÀN GIAO · PHIÊN BẢN '+(order.version || 1)+'</span>' +
     '<h2>'+(order.status==='approved'?'Bản bạn đã duyệt':'Bản cuối chờ bạn duyệt')+'</h2>'+
     roles.map(key=>'<article><h3>'+esc(DEPTS[key].name)+'</h3><div class="delivery-text">'+esc(order.outputs[key])+'</div></article>').join('')+
-    '<details class="delivery-qa"'+(issues?' open':'')+'><summary>QA · '+(issues?'Có góp ý trước khi sử dụng':'Đã rà soát')+'</summary><p>'+esc(qa.summary)+'</p>'+(issues?'<ul>'+issues+'</ul>':'')+'</details>'+
+    '<details class="delivery-qa"'+(issues?' open':'')+'><summary>QA · '+(qa.issues?.length?'Có góp ý trước khi sử dụng':'Đã rà soát')+'</summary><p>'+esc(qa.summary)+'</p>'+(issues?'<ul>'+issues+'</ul>':'')+'</details>'+
     (order.status==='approved'?'<p class="hint">Bạn đã duyệt bản này.</p>':'<button class="btn primary" id="approveDelivery">Duyệt bản này</button>')+
     '<details class="delivery-feedback"><summary>Yêu cầu chỉnh sửa</summary><label for="deliveryFeedback">Bạn muốn sửa phần nào?</label><textarea id="deliveryFeedback" maxlength="5000" placeholder="VD: Rút ngắn caption thứ hai và đổi lời kêu gọi hành động."></textarea><button class="btn small" id="reviseDelivery">Gửi phản hồi</button></details></section>';
 }
