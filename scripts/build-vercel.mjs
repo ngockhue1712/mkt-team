@@ -1,3 +1,4 @@
+import './build-model-helper.mjs';
 import './compose.mjs';
 import {mkdir,copyFile,readFile,writeFile} from 'node:fs/promises';
 await mkdir(new URL('../public',import.meta.url),{recursive:true});

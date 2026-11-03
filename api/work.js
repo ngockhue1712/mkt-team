@@ -18,7 +18,15 @@ async function continueProductionOrder(id) {
 }
 export default { async fetch(request) {
   try {
-    return await runAgencyRequest(request,{storage:{get,put},infer:writeWithModel,defer:waitUntil,authorize:canAccess,continueOrder:continueProductionOrder});
+    const started=Date.now(),deadline=started+274000;
+    const origin=new URL(request.url).origin;
+    const services={storage:{get,put},infer:args=>writeWithModel({...args,deadline}),authorize:canAccess};
+    async function continueWarm(id){
+      if(Date.now()-started>90000)return continueProductionOrder(id);
+      const next=new Request(origin+'/api/work',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',Authorization:'Bearer '+await orderAccess(id)},body:JSON.stringify({id,action:'advance'})});
+      await runAgencyRequest(next,{...services,continueOrder:continueWarm});
+    }
+    return await runAgencyRequest(request,{...services,defer:waitUntil,continueOrder:continueWarm});
   } catch (err) {
     console.warn('agency_storage',err?.name);
     return Response.json({error:'Chưa đọc được trạng thái. Vui lòng thử lại.'},{status:503});

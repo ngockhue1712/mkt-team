@@ -6,7 +6,7 @@
   "functions": {
     "api/work.js": {
       "maxDuration": 300,
-      "includeFiles": "node_modules/@node-llama-cpp/linux-x64/bins/**"
+      "includeFiles": "{lib/memfile,node_modules/@node-llama-cpp/linux-x64/bins/**}"
     },
     "api/{generate,status,connection,briefs}.js": {
       "maxDuration": 150
