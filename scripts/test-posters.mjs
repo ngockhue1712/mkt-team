@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import {makePosters} from '../lib/poster.mjs';
+import {artDirection,makePosters} from '../lib/poster.mjs';
 const brief={brief:'Tiệm Giấy Mơ đổi sách vào Chủ nhật. Poster vuông và story. Tiêu đề “Hẹn nhau đổi sách”. CTA là nhắn tin giữ chỗ.',brand:{}};
 const job={outputs:{creative:'Dùng tranh minh họa chồng sách.'}};
+assert.equal(await artDirection(brief,job,()=>assert.fail('complete art brief must render immediately')),null);
 const first=makePosters(brief,job);
 assert.deepEqual(first.map(a=>[a.width,a.height]),[[1080,1080],[1080,1920]]);
 assert.match(first[0].svg,/TIỆM GIẤY MƠ/u);assert.match(first[0].svg,/nhắn tin giữ chỗ/u);
