@@ -27,6 +27,30 @@ try{
  assert.equal(upstream.url,'https://api.openai.com/v1/responses');assert.equal(JSON.parse(upstream.body).store,false);assert.equal(upstream.headers.Authorization,'Bearer test-only-key');
  globalThis.fetch=async()=>Response.json({error:{code:'insufficient_quota'}},{status:429});assert.equal((await worker.fetch(post(data),{})).status,429);
  globalThis.fetch=async()=>Response.json({status:'incomplete',output:[]});assert.equal((await worker.fetch(post(data),{})).status,502);
+ const captured=[];
+ globalThis.fetch=async (url,init)=>{
+   const request=JSON.parse(init.body);captured.push(request);
+   if(request.text){
+     assert.match(request.input,/JSON/);
+     return Response.json({error:{param:'text.format',message:'Unsupported format json_object for this model'}},{status:400});
+   }
+   return Response.json({status:'completed',output:[{content:[{type:'output_text',text:'```json\n{"summary":"Đã nhận"}\n```'}]}]});
+ };
+ const compatible=await worker.fetch(post({...data,role:'account'}),{});
+ assert.equal(compatible.status,200);
+ assert.equal(JSON.parse((await compatible.json()).output).summary,'Đã nhận');
+ assert.equal(captured.length,2);
+ const failures=[
+   [401,'invalid_api_key','API key'], [403,'permission_denied','quyền'],[404,'model_not_found','model'],
+   [429,'insufficient_quota','hạn mức'],[429,'rate_limit_exceeded','tần suất'],
+   [400,'context_length_exceeded','dung lượng'],[400,'unsupported_parameter','định dạng'],[503,'server_error','tạm thời']
+ ];
+ for(const [status,code,expected] of failures){
+   let n=0;
+   globalThis.fetch=async()=>{n++;return Response.json({error:{code,param:'input',message:'Private context and key should never appear'}},{status,headers:{'x-request-id':'req_example'}});};
+   const r=await worker.fetch(post({...data,role:'qa'}),{});
+   const b=await r.json();assert.equal(n,1);assert.ok(b.error.includes(expected));assert.ok(b.error.includes('req_example'));assert.ok(!b.error.includes('Private context'));
+ }
 }finally{globalThis.fetch=originalFetch;}
 // Exercise the real client orchestrator, mocking only network/UI/storage.
 const store=new Map();const nodes=new Proxy({}, {get:()=>({innerHTML:'',className:'',textContent:'',classList:{toggle(){}},value:''})});

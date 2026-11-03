@@ -49,6 +49,6 @@ Site riêng tư được tạo riêng và dùng cùng mã nguồn này. .openai/
 
 Import repository `ngockhue1712/mkt-team` into Vercel. The root `vercel.json` sets framework Other, build `node scripts/build-vercel.mjs`, static output `public`, and Node.js API functions in `api/`. No build-time credentials are required.
 
-Public visitors see the UI and use their own OpenAI API key for generation. Vercel functions deliberately ignore a server OPENAI_API_KEY so anonymous visitors cannot spend the owner's credits. Local workspace data is per browser/origin; existing Sites data is not automatically migrated. Export/import JSON to migrate.
+On Vercel, every brief form sends to the private Blob inbox via POST /api/briefs. Visitors do not need a key or login to submit. A receipt confirms storage; uncertain submissions can be retried with the same order ID. The owner can open Vercel Storage → mkt-team-briefs → briefs. Files are private; there is no public listing or read API. Connect a private Blob store to the project with BLOB_STORE_ID for its workload identity. OpenAI generation remains optional. Vercel functions deliberately ignore a server OPENAI_API_KEY so anonymous visitors cannot spend the owner's credits. Local workspace data is per browser/origin; existing Sites data is not automatically migrated. Export/import JSON to migrate.
 
-This configuration has local adapter tests; a successful Vercel deployment still requires a connected Vercel account and hosted verification.
+Production: https://mkt-team-ecru.vercel.app/

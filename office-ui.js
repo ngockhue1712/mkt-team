@@ -23,13 +23,13 @@ function officeHome(){
   const selected=selectedRoom&&DEPTS[selectedRoom]?selectedRoom:null;
   return '<div class="office-heading"><div><span class="eyebrow">A LITTLE HOME FOR BIG IDEAS</span><h1><span class="title-my">My own</span> <span class="title-agency">AGENCY</span><span class="title-star" aria-hidden="true">✦</span></h1><p>Ghé một phòng để giao việc. Hoặc đưa brief cho cả nhà.</p></div><div class="hello-sticker" aria-hidden="true">'+pixelPup()+'<span>HELLO!<small>your tiny creative team</small></span></div><div class="office-tools">'+(review?'<button class="btn small review-count" data-route="review">'+review+' output chờ duyệt →</button>':'')+'<button class="btn small subtle" data-new>＋ Brief đầy đủ</button></div></div>'+
     '<div class="office-layout '+(selected?'room-open':'')+'"><div class="office-map"><div class="board-note"><span>MY LITTLE OFFICE</span><span>✦ &nbsp; MKT STUDIO &nbsp; ✦</span></div><span class="scrap-star star-one" aria-hidden="true">✦</span><span class="scrap-star star-two" aria-hidden="true">✧</span><span class="scrap-star star-three" aria-hidden="true">✦</span><div class="voxel-stage" id="voxelStage" aria-label="Văn phòng pixel sáu phòng ban và đội ngũ cún AI"></div><div class="room-directory" aria-label="Chọn phòng ban">'+Object.entries(ROOM_NAMES).map(([id,name])=>'<button data-dept="'+id+'" class="'+(id===selected?'active':'')+'" aria-expanded="'+String(id===selected)+'" aria-controls="roomDrawer">'+name+'</button>').join('')+'</div><div class="office-legend"><span><i class="tiny-square"></i>6 phòng AI · Bạn duyệt đầu ra</span><span>Bấm vào phòng để ghé thăm ↗</span></div></div>'+roomDrawer(selected)+'</div>'+
-    '<section class="quick-brief" aria-labelledby="agencyBriefHeading"><form id="quickAgency" data-scope="home"><div class="quick-title"><h2 id="agencyBriefHeading">Gửi brief cho agency</h2><small>Account chọn và phối hợp các phòng phù hợp</small></div><div class="quick-entry"><textarea id="homeBrief" name="brief" required maxlength="12000" rows="2" aria-label="Brief chung cho agency" placeholder="Mô tả mục tiêu của bạn… Ví dụ: Lên campaign ra mắt bộ sưu tập tháng 12, hướng đến nữ văn phòng 22–30 tuổi.">'+esc(d.brief)+'</textarea><button type="submit" class="btn primary" '+(busy?'disabled':'')+'>Gửi brief ↗</button></div>'+extraBriefFields(d.deliverables,'homeDeliverables')+'</form></section>'+
+    '<section class="quick-brief" aria-labelledby="agencyBriefHeading"><form id="quickAgency" data-scope="home"><div class="quick-title"><h2 id="agencyBriefHeading">Gửi brief cho agency</h2><small>Account chọn và phối hợp các phòng phù hợp</small></div><div class="quick-entry"><textarea id="homeBrief" name="brief" required maxlength="12000" rows="2" aria-label="Brief chung cho agency" placeholder="Mô tả mục tiêu của bạn… Ví dụ: Lên campaign ra mắt bộ sưu tập tháng 12, hướng đến nữ văn phòng 22–30 tuổi.">'+esc(d.brief)+'</textarea><button type="submit" class="btn primary" '+(busy?'disabled':'')+'>Gửi brief ↗</button></div>'+extraBriefFields(d.deliverables,'homeDeliverables')+intakeNote()+'</form></section>'+
     (state.orders.length?'<div class="section-head"><h2>Order gần đây</h2><button class="btn small" data-route="orders">Xem tất cả →</button></div>'+rows(state.orders.slice(0,3)):'');
 }
 function roomDrawer(id){
   if(!id)return '<aside id="roomDrawer" hidden></aside>';
   const d=quickDraft(id),dept=DEPTS[id];
-  return '<aside class="room-drawer" id="roomDrawer" aria-labelledby="roomTitle"><div class="drawer-head"><div><div class="room-welcome">'+pixelPup()+'<span>WELCOME TO<br>MY LITTLE ROOM</span></div><h2 id="roomTitle">Phòng '+ROOM_NAMES[id]+'</h2><p>'+dept.desc+'</p></div><button type="button" class="close" id="closeRoom" aria-label="Đóng phòng, về tổng quan">×</button></div><form id="quickRoom" data-scope="'+id+'"><label for="roomBrief">Brief của bạn</label><textarea id="roomBrief" name="brief" required maxlength="12000" rows="5" placeholder="'+esc({account:'Chuẩn hóa brief và đề xuất phạm vi công việc cho chiến dịch…',strategy:'Lên chiến lược tiếp cận nhóm khách hàng…',content:'Viết 5 caption giới thiệu bộ sưu tập mới, giọng trẻ trung…',creative:'Đề xuất 3 concept hình ảnh cùng brief thiết kế cho…',performance:'Phân bổ ngân sách 20 triệu cho chiến dịch…',qa:'Rà soát nội dung sau theo brief và brand guideline…'}[id])+'">'+esc(d.brief)+'</textarea>'+extraBriefFields(d.deliverables,'roomDeliverables')+'<button class="btn primary submit-room" type="submit" '+(busy?'disabled':'')+'>Giao cho '+ROOM_NAMES[id]+' ↗</button></form><div class="room-route"><span>Nhận brief</span><span>→ '+ROOM_NAMES[id]+' thực hiện</span><span>→ Kiểm tra</span><b>→ Bạn duyệt</b></div></aside>';
+  return '<aside class="room-drawer" id="roomDrawer" aria-labelledby="roomTitle"><div class="drawer-head"><div><div class="room-welcome">'+pixelPup()+'<span>WELCOME TO<br>MY LITTLE ROOM</span></div><h2 id="roomTitle">Phòng '+ROOM_NAMES[id]+'</h2><p>'+dept.desc+'</p></div><button type="button" class="close" id="closeRoom" aria-label="Đóng phòng, về tổng quan">×</button></div><form id="quickRoom" data-scope="'+id+'"><label for="roomBrief">Brief của bạn</label><textarea id="roomBrief" name="brief" required maxlength="12000" rows="5" placeholder="'+esc({account:'Chuẩn hóa brief và đề xuất phạm vi công việc cho chiến dịch…',strategy:'Lên chiến lược tiếp cận nhóm khách hàng…',content:'Viết 5 caption giới thiệu bộ sưu tập mới, giọng trẻ trung…',creative:'Đề xuất 3 concept hình ảnh cùng brief thiết kế cho…',performance:'Phân bổ ngân sách 20 triệu cho chiến dịch…',qa:'Rà soát nội dung sau theo brief và brand guideline…'}[id])+'">'+esc(d.brief)+'</textarea>'+extraBriefFields(d.deliverables,'roomDeliverables')+intakeNote()+'<button class="btn primary submit-room" type="submit" '+(busy?'disabled':'')+'>Giao cho '+ROOM_NAMES[id]+' ↗</button></form><div class="room-route"><span>Nhận brief</span><span>→ '+ROOM_NAMES[id]+' thực hiện</span><span>→ Kiểm tra</span><b>→ Bạn duyệt</b></div></aside>';
 }
 function openRoom(id){
   if(!DEPTS[id]||!Object.hasOwn(ROOM_NAMES,id))return;
@@ -42,12 +42,86 @@ function initOffice(){
   if(window.VoxelOffice){officeScene=new window.VoxelOffice(host,{onSelect:openRoom,selected:selectedRoom,counts:roomCounts()});}
   else {host.innerHTML='<div class="hint">Chọn phòng ban bên dưới để giao việc.</div>';document.querySelector('.room-directory')?.style.setProperty('display','flex');}
 }
+const pendingBriefs = new Set();
+function hasAgencyInbox() {
+  return document.documentElement?.dataset?.briefInbox === 'remote';
+}
+function intakeNote() {
+  return hasAgencyInbox() ? '<p class="muted intake-note">Brief được gửi đến hộp nhận riêng của agency. Không cần API key.</p>' : '';
+}
+function intakePanel(order) {
+  if (!hasAgencyInbox()) return '';
+  const destination = order.mode === 'single' ? 'phòng ' + ROOM_NAMES[order.department] : 'toàn agency';
+  if (order.receivedAt) {
+    return '<section class="panel intake-receipt" aria-label="Biên nhận brief"><h2>Agency đã nhận brief</h2><p>Đã gửi đến ' +
+      esc(destination) + ' lúc ' + esc(new Date(order.receivedAt).toLocaleString('vi-VN')) +
+      '.</p><small>Mã brief · ' + esc(order.id) + '</small>' +
+      (order.status === 'received' ? '<p>Brief đang chờ xử lý. Bạn có thể xem lại trong mục Order.</p><button class="btn small" id="copyHandoff">Sao chép yêu cầu cho ChatGPT</button>' +
+        (apiKey || serverConfigured ? ' <button class="btn small" id="startDraft">Chạy bằng AI đã kết nối</button>' : '') : '') + '</section>';
+  }
+  if (order.status === 'sending_brief') return '<div class="hint" role="status">Đang gửi brief đến agency…</div>';
+  if (order.status === 'draft' || order.status === 'not_sent') {
+    return '<section class="panel intake-receipt"><h2>Brief chưa gửi</h2><p>' +
+      esc(order.intakeError || 'Brief hiện nằm trên thiết bị này. Gửi để agency nhận được yêu cầu.') +
+      '</p><button type="button" class="btn primary small" id="sendBriefAgain">Gửi brief cho agency</button></section>';
+  }
+  return '';
+}
+async function sendAgencyBrief(order) {
+  if (pendingBriefs.has(order.id) || order.receivedAt) return;
+  pendingBriefs.add(order.id);
+  order.status = 'sending_brief';
+  order.intakeError = '';
+  save();
+  if (activeId === order.id) render();
+  let received = false;
+  try {
+    const fields = ['id','mode','department','title','brief','deliverables','deadline','budget','reference','brand'];
+    const payload = Object.fromEntries(fields.map(key => [key, order[key]]));
+    const response = await fetch('/api/briefs', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload), signal: AbortSignal.timeout(30000)
+    });
+    const receipt = await response.json();
+    if (!response.ok) throw new Error(receipt.error || 'Chưa nhận được biên nhận.');
+    if (receipt.id !== order.id || !Number.isFinite(Date.parse(receipt.receivedAt))) throw new Error('Biên nhận không hợp lệ.');
+    order.receivedAt = receipt.receivedAt;
+    order.status = 'received';
+    received = true;
+  } catch (error) {
+    order.status = 'not_sent';
+    order.intakeError = 'Chưa xác nhận gửi thành công. Bạn có thể gửi lại cùng mã brief.';
+    if (error.name === 'TypeError' || error.name === 'TimeoutError') order.intakeError += ' Hãy kiểm tra kết nối mạng.';
+  } finally {
+    pendingBriefs.delete(order.id);
+    save();
+    if (activeId === order.id) render();
+  }
+  if (received) {
+    toast('Agency đã nhận brief ' + order.id.slice(0, 8).toUpperCase() + '.');
+    if (!busy && (apiKey || serverConfigured)) await execute(order);
+  }
+}
+async function copyForChat(order) {
+  const task = order.mode === 'single' ? 'Thực hiện order cho phòng ' + ROOM_NAMES[order.department] :
+    'Phân công các phòng liên quan và thực hiện order marketing';
+  const prompt = task + '. Tạo các đầu ra được giao, ghi rõ giả định, kiểm tra theo brief và để khách hàng duyệt.\n\n' + briefContext(order);
+  try {
+    await navigator.clipboard.writeText(prompt);
+    toast('Đã sao chép. Dán yêu cầu vào ChatGPT để xử lý brief.');
+  } catch {
+    toast('Có thể dùng nút Xuất bàn giao để tải brief.');
+  }
+}
+
 async function submitOrder(values){
   if(busy){toast('Agency đang xử lý một order. Bạn có thể soạn brief tiếp theo.');return;}
   const brief=String(values.brief||'').trim();if(!brief){toast('Nhập brief trước khi giao việc.');return;}
   if(values.mode==='single'&&!Object.hasOwn(ROOM_NAMES,values.department)){toast('Chọn phòng ban hợp lệ.');return;}
-  const o={...values,title:String(values.title||brief.split(/\n/)[0]).slice(0,150),brief,deliverables:String(values.deliverables||'Thực hiện các đầu ra được yêu cầu trong brief. Nếu phạm vi đầu ra chưa rõ, hỏi khách hàng trước khi thực hiện.'),deadline:values.deadline||'',budget:values.budget||'',reference:values.reference||'',id:orderId(),created:new Date().toISOString(),brand:{...state.brand},status:'draft',outputs:{},history:[],pipeline:['account'],calls:0,error:null};
-  state.orders.unshift(o);captureQuickDrafts();save();activeId=o.id;activeTab='account';route='detail';render();if(values.draftScope&&state.uiDrafts){delete state.uiDrafts[values.draftScope];save();}window.scrollTo({top:0,behavior:'smooth'});await execute(o);return o;
+  const o={...values,title:String(values.title||brief.split(/\n/)[0]).slice(0,150),brief,deliverables:String(values.deliverables||'Thực hiện các đầu ra được yêu cầu trong brief. Nếu phạm vi đầu ra chưa rõ, hỏi khách hàng trước khi thực hiện.'),deadline:values.deadline||'',budget:values.budget||'',reference:values.reference||'',id:orderId(),created:new Date().toISOString(),brand:{...state.brand},status:hasAgencyInbox()?'sending_brief':'draft',outputs:{},history:[],pipeline:['account'],calls:0,error:null};
+  state.orders.unshift(o);captureQuickDrafts();save();activeId=o.id;activeTab=hasAgencyInbox()?'brief':'account';route='detail';render();if(values.draftScope&&state.uiDrafts){delete state.uiDrafts[values.draftScope];save();}window.scrollTo({top:0,behavior:'smooth'});if(hasAgencyInbox()) await sendAgencyBrief(o);
+  else if(apiKey || serverConfigured) await execute(o);
+  return o;
 }
 function bindOffice(){
   for(const [id,scope] of [['quickAgency','home'],['quickRoom',selectedRoom]]){

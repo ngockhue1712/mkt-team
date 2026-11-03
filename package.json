@@ -4,8 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/compose.mjs && node scripts/dev.mjs",
-    "test": "node scripts/test.mjs",
+    "test": "node scripts/test.mjs && node scripts/test-inbox.mjs",
     "build": "bash scripts/build.sh",
     "validate": "node scripts/validate-artifact.mjs"
+  },
+  "dependencies": {
+    "@vercel/blob": "2.8.2"
   }
 }

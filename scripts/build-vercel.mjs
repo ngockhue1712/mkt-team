@@ -1,8 +1,9 @@
 import './compose.mjs';
-import {mkdir,copyFile} from 'node:fs/promises';
+import {mkdir,copyFile,readFile,writeFile} from 'node:fs/promises';
 await mkdir(new URL('../public',import.meta.url),{recursive:true});
 await mkdir(new URL('../public/assets',import.meta.url),{recursive:true});
-await copyFile(new URL('../ui.html',import.meta.url),new URL('../public/index.html',import.meta.url));
+const page = await readFile(new URL('../ui.html',import.meta.url),'utf8');
+await writeFile(new URL('../public/index.html',import.meta.url), page.replace('<html lang="vi">', '<html lang="vi" data-brief-inbox="remote">'));
 await copyFile(new URL('../voxel-office.js',import.meta.url),new URL('../public/assets/voxel-office.js',import.meta.url));
 await copyFile(new URL('../voxel-ui.css',import.meta.url),new URL('../public/assets/voxel-ui.css',import.meta.url));
 await copyFile(new URL('../office-ui.js',import.meta.url),new URL('../public/assets/office-ui.js',import.meta.url));
