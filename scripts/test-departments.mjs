@@ -96,3 +96,18 @@ services.infer=async input=>{
 await kick();await drain();
 assert.equal(qaAttempts,2);assert.equal(savedJob().status,'review');
 console.log('PASS: timed-out QA resumes without the customer or repeating completed roles.');
+
+const visualOrder=crypto.randomUUID();
+write('briefs/'+visualOrder+'.json',JSON.stringify({brief:{id:visualOrder,mode:'single',department:'creative',brief:'Ảnh studio chụp túi da',imageMode:'photo',brand:{}}}));
+let images=0;
+const visualServices={storage,infer,authorize:async()=>true,generateImage:async(b,j)=>{
+  assert.equal(b.imageMode,'photo');assert.equal(j.artwork[0].width,1080);assert.ok(j.outputs.creative);images++;
+  return {status:'ready',asset:{kind:'gpt',version:1,mode:'photo',title:'Túi da',width:1024,height:1024,name:'Ảnh phong cách chụp · GPT Image'}};
+}};
+for(let i=0;i<6;i++){
+  const response=await runAgencyRequest(new Request(origin+'/api/work',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify({id:visualOrder,action:'advance'})}),visualServices);
+  const {job}=await response.json();
+  if(i>=4){assert.equal(job.status,'review');assert.equal(job.artwork[0].kind,'gpt');assert.ok(job.artwork[1].svg);}
+}
+assert.equal(images,1);
+console.log('PASS: new scoped brief runs Creative, generates artwork once and hands both images to the final review.');

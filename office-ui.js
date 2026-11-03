@@ -23,13 +23,13 @@ function officeHome(){
   const selected=selectedRoom&&DEPTS[selectedRoom]?selectedRoom:null;
   return '<div class="office-heading"><div><span class="eyebrow">A LITTLE HOME FOR BIG IDEAS</span><h1><span class="title-my">My own</span> <span class="title-agency">AGENCY</span><span class="title-star" aria-hidden="true">✦</span></h1><p>Ghé một phòng để giao việc. Hoặc đưa brief cho cả nhà.</p></div><div class="hello-sticker" aria-hidden="true">'+pixelPup()+'<span>HELLO!<small>your tiny creative team</small></span></div><div class="office-tools">'+(review?'<button class="btn small review-count" data-route="review">'+review+' output chờ duyệt →</button>':'')+'<button class="btn small subtle" data-new>＋ Brief đầy đủ</button></div></div>'+
     '<div class="office-layout '+(selected?'room-open':'')+'"><div class="office-map"><div class="board-note"><span>MY LITTLE OFFICE</span><span>✦ &nbsp; MKT STUDIO &nbsp; ✦</span></div><span class="scrap-star star-one" aria-hidden="true">✦</span><span class="scrap-star star-two" aria-hidden="true">✧</span><span class="scrap-star star-three" aria-hidden="true">✦</span><div class="voxel-stage" id="voxelStage" aria-label="Văn phòng pixel sáu phòng ban và đội ngũ cún AI"></div><div class="room-directory" aria-label="Chọn phòng ban">'+Object.entries(ROOM_NAMES).map(([id,name])=>'<button data-dept="'+id+'" class="'+(id===selected?'active':'')+'" aria-expanded="'+String(id===selected)+'" aria-controls="roomDrawer">'+name+'</button>').join('')+'</div><div class="office-legend"><span><i class="tiny-square"></i>6 phòng AI · Bạn duyệt đầu ra</span><span>Bấm vào phòng để ghé thăm ↗</span></div></div>'+roomDrawer(selected)+'</div>'+
-    '<section class="quick-brief" aria-labelledby="agencyBriefHeading"><form id="quickAgency" data-scope="home"><div class="quick-title"><h2 id="agencyBriefHeading">Gửi brief cho agency</h2><small>Account chọn và phối hợp các phòng phù hợp</small></div><div class="quick-entry"><textarea id="homeBrief" name="brief" required maxlength="12000" rows="2" aria-label="Brief chung cho agency" placeholder="Mô tả mục tiêu của bạn… Ví dụ: Lên campaign ra mắt bộ sưu tập tháng 12, hướng đến nữ văn phòng 22–30 tuổi.">'+esc(d.brief)+'</textarea><button type="submit" class="btn primary" '+(busy?'disabled':'')+'>Gửi brief ↗</button></div>'+extraBriefFields(d.deliverables,'homeDeliverables')+intakeNote()+'</form></section>'+
+    '<section class="quick-brief" aria-labelledby="agencyBriefHeading"><form id="quickAgency" data-scope="home"><div class="quick-title"><h2 id="agencyBriefHeading">Gửi brief cho agency</h2><small>Account chọn và phối hợp các phòng phù hợp</small></div><div class="quick-entry"><textarea id="homeBrief" name="brief" required maxlength="12000" rows="2" aria-label="Brief chung cho agency" placeholder="Mô tả mục tiêu của bạn… Ví dụ: Lên campaign ra mắt bộ sưu tập tháng 12, hướng đến nữ văn phòng 22–30 tuổi.">'+esc(d.brief)+'</textarea><button type="submit" class="btn primary" '+(busy?'disabled':'')+'>Gửi brief ↗</button></div>'+imagePicker(d.imageMode)+extraBriefFields(d.deliverables,'homeDeliverables')+intakeNote()+'</form></section>'+
     (state.orders.length?'<div class="section-head"><h2>Order gần đây</h2><button class="btn small" data-route="orders">Xem tất cả →</button></div>'+rows(state.orders.slice(0,3)):'');
 }
 function roomDrawer(id){
   if(!id)return '<aside id="roomDrawer" hidden></aside>';
   const d=quickDraft(id),dept=DEPTS[id];
-  return '<aside class="room-drawer" id="roomDrawer" aria-labelledby="roomTitle"><div class="drawer-head"><div><div class="room-welcome">'+pixelPup()+'<span>WELCOME TO<br>MY LITTLE ROOM</span></div><h2 id="roomTitle">Phòng '+ROOM_NAMES[id]+'</h2><p>'+dept.desc+'</p></div><button type="button" class="close" id="closeRoom" aria-label="Đóng phòng, về tổng quan">×</button></div><form id="quickRoom" data-scope="'+id+'"><label for="roomBrief">Brief của bạn</label><textarea id="roomBrief" name="brief" required maxlength="12000" rows="5" placeholder="'+esc({account:'Chuẩn hóa brief và đề xuất phạm vi công việc cho chiến dịch…',strategy:'Lên chiến lược tiếp cận nhóm khách hàng…',content:'Viết 5 caption giới thiệu bộ sưu tập mới, giọng trẻ trung…',creative:'Đề xuất 3 concept hình ảnh cùng brief thiết kế cho…',performance:'Phân bổ ngân sách 20 triệu cho chiến dịch…',qa:'Rà soát nội dung sau theo brief và brand guideline…'}[id])+'">'+esc(d.brief)+'</textarea>'+extraBriefFields(d.deliverables,'roomDeliverables')+intakeNote()+'<button class="btn primary submit-room" type="submit" '+(busy?'disabled':'')+'>Giao cho '+ROOM_NAMES[id]+' ↗</button></form><div class="room-route"><span>Nhận brief</span><span>→ '+ROOM_NAMES[id]+' thực hiện</span><span>→ Kiểm tra</span><b>→ Bạn duyệt</b></div></aside>';
+  return '<aside class="room-drawer" id="roomDrawer" aria-labelledby="roomTitle"><div class="drawer-head"><div><div class="room-welcome">'+pixelPup()+'<span>WELCOME TO<br>MY LITTLE ROOM</span></div><h2 id="roomTitle">Phòng '+ROOM_NAMES[id]+'</h2><p>'+dept.desc+'</p></div><button type="button" class="close" id="closeRoom" aria-label="Đóng phòng, về tổng quan">×</button></div><form id="quickRoom" data-scope="'+id+'"><label for="roomBrief">Brief của bạn</label><textarea id="roomBrief" name="brief" required maxlength="12000" rows="5" placeholder="'+esc({account:'Chuẩn hóa brief và đề xuất phạm vi công việc cho chiến dịch…',strategy:'Lên chiến lược tiếp cận nhóm khách hàng…',content:'Viết 5 caption giới thiệu bộ sưu tập mới, giọng trẻ trung…',creative:'Đề xuất 3 concept hình ảnh cùng brief thiết kế cho…',performance:'Phân bổ ngân sách 20 triệu cho chiến dịch…',qa:'Rà soát nội dung sau theo brief và brand guideline…'}[id])+'">'+esc(d.brief)+'</textarea>'+imagePicker(d.imageMode)+extraBriefFields(d.deliverables,'roomDeliverables')+intakeNote()+'<button class="btn primary submit-room" type="submit" '+(busy?'disabled':'')+'>Giao cho '+ROOM_NAMES[id]+' ↗</button></form><div class="room-route"><span>Nhận brief</span><span>→ '+ROOM_NAMES[id]+' thực hiện</span><span>→ Kiểm tra</span><b>→ Bạn duyệt</b></div></aside>';
 }
 function openRoom(id){
   if(!DEPTS[id]||!Object.hasOwn(ROOM_NAMES,id))return;
@@ -58,7 +58,7 @@ function intakePanel(order) {
       esc(destination) + ' lúc ' + esc(new Date(order.receivedAt).toLocaleString('vi-VN')) +
       '.</p><small>Mã brief · ' + esc(order.id) + '</small>' +
       (order.status === 'received' ? '<p role="status">Agency đang tiếp nhận công việc.</p>' :
-        order.engine==='office' && order.status==='running' ? '<p role="status">Đang thực hiện · '+esc(order.runningRole==='artwork'?'Studio hình ảnh':DEPTS[order.runningRole]?.name||'Account')+(order.runningRole==='content' && order.captions?.length?' · Đã viết '+order.captions.length+' caption':'')+(order.background?'. Bạn có thể đóng trang. Mở lại Order trên trình duyệt này để xem kết quả.</p>':'. Kết quả từng phòng sẽ được lưu sau khi hoàn tất.</p>') : '') + '</section>';
+        order.engine==='office' && order.status==='running' ? '<p role="status">Đang thực hiện · '+esc(order.runningRole==='gpt_image'?'GPT Image':order.runningRole==='artwork'?'Studio hình ảnh':DEPTS[order.runningRole]?.name||'Account')+(order.runningRole==='content' && order.captions?.length?' · Đã viết '+order.captions.length+' caption':'')+(order.background?'. Bạn có thể đóng trang. Mở lại Order trên trình duyệt này để xem kết quả.</p>':'. Kết quả từng phòng sẽ được lưu sau khi hoàn tất.</p>') : '') + '</section>';
   }
   if (order.status === 'sending_brief') return '<div class="hint" role="status">Đang gửi brief đến agency…</div>';
   if (order.status === 'draft' || order.status === 'not_sent' || order.status === 'error') {
@@ -78,7 +78,7 @@ async function sendAgencyBrief(order) {
   if (activeId === order.id) render();
   let received = false;
   try {
-    const fields = ['id','mode','department','title','brief','deliverables','deadline','budget','reference','brand'];
+    const fields = ['id','mode','department','title','brief','deliverables','deadline','budget','reference','brand','imageMode'];
     const payload = Object.fromEntries(fields.map(key => [key, order[key]]));
     const response = await fetch('/api/briefs', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -139,14 +139,42 @@ function bindOffice(){
 }
 function workRole(department){return department==='account'?'account_work':department==='qa'?'qa_work':department;}
 
+let studioImageConfigured=false;
+function imagePicker(selected){
+  if(!hasAgencyInbox())return '';
+  const modes=[['auto','Để Studio chọn theo brief'],['photo','Ảnh phong cách chụp · GPT Image'],['design','Ảnh thiết kế · GPT Image'],['vector','Poster minh họa vector']];
+  return '<label class="image-picker">Hình ảnh muốn nhận<select name="imageMode">'+modes.map(([value,label])=>'<option value="'+value+'"'+((selected||'auto')===value?' selected':'')+((value==='photo'||value==='design')&&!studioImageConfigured?' disabled':'')+'>'+label+'</option>').join('')+'</select><small>'+(studioImageConfigured?'Studio tạo ảnh dựa trên brief và góp ý của bạn.':'Poster vector đang hoạt động. Hai chế độ GPT Image chờ Studio kết nối dịch vụ.')+'</small></label>';
+}
+
+const imageDownloads=new Map();
+async function fullImageURL(order,art){
+  if(art.kind!=='gpt')return posterURL(art);
+  const key=order.id+'/'+art.version;
+  if(!imageDownloads.has(key)){
+    for(const old of imageDownloads.keys()){
+      if(imageDownloads.size<5)break;
+      imageDownloads.get(old).then(url=>URL.revokeObjectURL(url)).catch(()=>{});
+      imageDownloads.delete(old);
+    }
+    const read=async()=>{
+      const response=await fetch('/api/image?id='+encodeURIComponent(order.id)+'&v='+Number(art.version),{headers:{Authorization:'Bearer '+order.workToken}});
+      if(!response.ok)throw Error('image_read');
+      const blob=await response.blob();return URL.createObjectURL(blob);
+    };
+    imageDownloads.set(key,read().catch(error=>{imageDownloads.delete(key);throw error;}));
+  }
+  return imageDownloads.get(key);
+}
+
 function posterURL(art) {
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(art.svg);
 }
 function posterSection(order) {
   if(!order.artwork?.length)return '';
   return '<section class="poster-section" aria-label="Ấn phẩm hình ảnh"><div class="poster-heading"><span class="eyebrow">CREATIVE STUDIO</span><h3>Ấn phẩm hình ảnh</h3></div>'+
+    (order.imageResult?.message?'<p class="intake-note">'+esc(order.imageResult.message)+'</p>':'')+
     (order.supplementaryArt?'<p>Hình minh họa được bổ sung sau lần duyệt trước.</p>':'')+
-    '<div class="poster-gallery">'+order.artwork.map((art,i)=>'<figure class="poster-card"><button type="button" class="poster-preview" data-zoom-art="'+i+'" aria-label="Xem lớn '+esc(art.name)+'"><img src="'+posterURL(art)+'" alt="'+esc(art.alt)+'"></button><figcaption><strong>'+esc(art.name)+'</strong><span>'+esc(art.width)+' × '+esc(art.height)+' px</span></figcaption><div class="poster-actions"><button type="button" class="btn small" data-zoom-art="'+i+'">Xem lớn</button><button type="button" class="btn primary small" data-save-art="'+i+'">Tải PNG</button></div></figure>').join('')+
+    '<div class="poster-gallery">'+order.artwork.map((art,i)=>'<figure class="poster-card"><button type="button" class="poster-preview" data-zoom-art="'+i+'" aria-label="Xem lớn '+esc(art.name)+'"><img '+(art.kind==='gpt'?'data-private-art="'+i+'"':'src="'+posterURL(art)+'"')+' alt="'+esc(art.alt)+'"></button><figcaption><strong>'+esc(art.name)+'</strong><span>'+esc(art.width)+' × '+esc(art.height)+' px</span></figcaption><div class="poster-actions"><button type="button" class="btn small" data-zoom-art="'+i+'">Xem lớn</button><button type="button" class="btn primary small" data-save-art="'+i+'">Tải PNG</button></div></figure>').join('')+
     '</div><button type="button" class="btn small" id="artFeedback">Góp ý hình ảnh</button></section>';
 }
 async function savePoster(order,index,button) {
@@ -154,7 +182,7 @@ async function savePoster(order,index,button) {
   if(!art || button.disabled)return;
   button.disabled=true;
   try {
-    const bitmap=new Image();bitmap.src=posterURL(art);await bitmap.decode();
+    const bitmap=new Image();bitmap.src=await fullImageURL(order,art);await bitmap.decode();
     const canvas=document.createElement('canvas');canvas.width=art.width;canvas.height=art.height;
     canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
@@ -174,10 +202,14 @@ function bindPosters(){
       order.artwork=makePosters(order,order);save();if(route==='detail'&&activeId===order.id)render();
     }).catch(()=>toast('Chưa tải được hình minh họa.'));
   }
-  document.querySelectorAll('[data-zoom-art]').forEach(button=>button.onclick=()=>{
+  document.querySelectorAll('[data-private-art]').forEach(img=>{
+    fullImageURL(order,order.artwork[Number(img.dataset.privateArt)]).then(url=>img.src=url).catch(()=>{img.alt='Ảnh chưa tải được. Bấm Xem lớn để thử lại.';});
+  });
+  document.querySelectorAll('[data-zoom-art]').forEach(button=>button.onclick=async()=>{
     const art=order.artwork[Number(button.dataset.zoomArt)],dialog=document.createElement('dialog');
+    let url;try{url=await fullImageURL(order,art);}catch{toast('Chưa tải được ảnh. Hãy thử lại.');return;}
     dialog.className='poster-dialog';
-    dialog.innerHTML='<div><strong>'+esc(art.name)+'</strong><button type="button" class="btn small">Đóng</button></div><img alt="'+esc(art.alt)+'" src="'+posterURL(art)+'">';
+    dialog.innerHTML='<div><strong>'+esc(art.name)+'</strong><button type="button" class="btn small">Đóng</button></div><img alt="'+esc(art.alt)+'" src="'+url+'">';
     document.body.append(dialog);dialog.querySelector('button').onclick=()=>dialog.close();
     dialog.addEventListener('close',()=>{dialog.remove();button.focus();},{once:true});dialog.showModal();
   });
@@ -204,7 +236,7 @@ function outcomePanel(order) {
 
 function applyOfficeResult(order, job) {
   if (job.id !== order.id || !job.outputs || !Array.isArray(job.pipeline)) throw Error('Không đọc được bản bàn giao.');
-  for (const key of ['outputs','pipeline','status','calls','runningRole','version','approvedAt','error','captions','artwork','supplementaryArt']) order[key]=job[key];
+  for (const key of ['outputs','pipeline','status','calls','runningRole','version','approvedAt','error','captions','artwork','supplementaryArt','imageResult']) order[key]=job[key];
   order.engine='office';
   order.history=(job.history||[]).flatMap(version=>Object.entries(version.outputs).map(([role,output])=>({role,output,at:version.approvedAt||order.created})));
   if(job.outputs.qa) order.qaPassed=JSON.parse(job.outputs.qa).passed===true;
@@ -220,7 +252,7 @@ async function runOfficeOrder(order, action='advance', feedback='') {
   try {
     if(!order.workToken){
       // Historical receipts predate work tokens. Re-present the unchanged original brief.
-      const fields=['id','mode','department','title','brief','deliverables','deadline','budget','reference','brand'];
+      const fields=['id','mode','department','title','brief','deliverables','deadline','budget','reference','brand','imageMode'];
       const renewed=await fetch('/api/briefs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fields.map(k=>[k,order[k]])))});
       const receipt=await renewed.json();
       if(!renewed.ok || !receipt.workToken || receipt.id!==order.id)throw Error('Không xác minh được brief gốc trên thiết bị này.');

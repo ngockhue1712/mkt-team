@@ -1,3 +1,1 @@
-import worker from '../worker/index.js';
-// Public Vercel deployment uses each visitor's key; never exposes an owner-funded API.
-export default { fetch(request) { return worker.fetch(request, {}); } };
+export default {fetch(){return Response.json({configured:false,imageConfigured:!!process.env.OPENAI_IMAGE_API_KEY},{headers:{'Cache-Control':'no-store'}});}};

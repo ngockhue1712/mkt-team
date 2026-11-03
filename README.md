@@ -58,3 +58,9 @@ Production: https://mkt-team-ecru.vercel.app/
 Vercel chạy một mô hình ngôn ngữ mở trên CPU máy chủ. Máy chủ tải trọng số GGUF từ kho Qwen chính thức, kiểm tra kích thước và SHA-256, rồi giữ lại cho các lần chạy trên cùng instance. Lượt đầu có thể lâu hơn. Khách giao riêng một phòng sẽ trải qua Account → phòng đó → QA. Brief toàn agency chạy Strategy, Content, Creative và Performance trước QA. Mỗi bước đọc brief, feedback và phần bàn giao thực tế. Order có số lượng caption rõ ràng được viết từng bài rồi đối chiếu độ dài và yêu cầu ảnh.
 
 Các bản bàn giao, tiến độ, phiên bản và quyết định duyệt được lưu trong thư mục riêng outcomes/ của Blob. Vercel production khởi động phòng đầu tiên trước khi trả biên nhận, tự chuyển tiếp sau mỗi bước và chạy lại sau khi khách góp ý. Khách có thể đóng tab sau khi thấy biên nhận rồi mở Order bằng cùng trình duyệt. Khi mạng hoặc máy chủ gián đoạn, mở lại order để đồng bộ và tiếp tục. Góp ý của QA hiện cùng bản bàn giao để khách quyết định. Model nhỏ trên CPU phù hợp làm bản nháp và không thay thế kiểm chứng thông tin, nghiên cứu thị trường hay thiết kế ảnh thực tế.
+
+### Ảnh GPT trên Vercel
+
+Chủ Studio cấu hình `OPENAI_IMAGE_API_KEY` trong Environment Variables của Production rồi redeploy. Key cần có quyền gọi Images API và có hạn mức thanh toán OpenAI API. Khách không cần nhập key. Khi chưa kết nối, web bàn giao poster vector và ghi rõ trạng thái GPT Image. Các order đã hoàn tất không tự phát sinh lượt gọi OpenAI.
+
+Chọn tự động theo brief, ảnh phong cách chụp, ảnh thiết kế hoặc chỉ nhận poster vector. Khi bật, mỗi phiên bản order tạo tối đa một ảnh PNG qua GPT Image, kèm poster vector. Giá trị mặc định của `STUDIO_IMAGE_DAILY_LIMIT` là 10 lượt cho cả website mỗi ngày UTC. Đặt 0 để dừng gọi, hoặc đặt 1–100. Lượt gọi thất bại cũng chiếm một lượt. Ảnh được lưu trong Blob riêng, endpoint đọc ảnh chỉ chấp nhận quyền truy cập của order.

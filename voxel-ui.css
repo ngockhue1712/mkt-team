@@ -52,3 +52,6 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline-color:#94a79a
 .poster-actions{display:flex;gap:8px;flex-wrap:wrap}.poster-section>#artFeedback{margin-top:18px}
 .poster-dialog{max-width:94vw;max-height:95dvh;padding:12px;border:1px solid #c6b9ab;border-radius:14px;background:#f7f1e9;color:#432f32}
 .poster-dialog::backdrop{background:#251c20b8}.poster-dialog>div{margin-bottom:8px}.poster-dialog img{display:block;max-width:88vw;max-height:80dvh;object-fit:contain}
+.image-picker{display:grid;gap:6px;margin:12px 0;font-weight:650;font-size:14px}
+.image-picker select{width:100%;border:1px solid #cbb9ac;background:#fffaf2;color:#41322e;border-radius:8px;padding:9px;font:inherit}
+.image-picker small{font-size:12px;color:#675950;font-weight:400}
