@@ -100,7 +100,10 @@ console.log('PASS: timed-out QA resumes without the customer or repeating comple
 const visualOrder=crypto.randomUUID();
 write('briefs/'+visualOrder+'.json',JSON.stringify({brief:{id:visualOrder,mode:'single',department:'creative',brief:'Ảnh studio chụp túi da',imageMode:'photo',brand:{}}}));
 let images=0;
-const visualServices={storage,infer,authorize:async()=>true,generateImage:async(b,j)=>{
+const visualServices={storage,gptEnabled:true,infer:args=>{
+  assert.ok(!args.system.includes('Bạn là họa sĩ'),'GPT orders must not wait for vector layout inference');
+  return infer(args);
+},authorize:async()=>true,generateImage:async(b,j)=>{
   assert.equal(b.imageMode,'photo');assert.equal(j.artwork[0].width,1080);assert.ok(j.outputs.creative);images++;
   return {status:'ready',asset:{kind:'gpt',version:1,mode:'photo',title:'Túi da',width:1024,height:1024,name:'Ảnh phong cách chụp · GPT Image'}};
 }};
