@@ -9,6 +9,8 @@
     "validate": "node scripts/validate-artifact.mjs"
   },
   "dependencies": {
-    "@vercel/blob": "2.8.2"
+    "@vercel/blob": "2.8.2",
+    "node-llama-cpp": "3.22.2",
+    "@node-llama-cpp/linux-x64": "3.22.2"
   }
 }

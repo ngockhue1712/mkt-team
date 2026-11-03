@@ -38,3 +38,5 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline-color:#94a79a
 .intake-receipt{margin:0 0 18px;padding:18px 20px;border-left:4px solid #91a99b}
 .intake-receipt h2{font:700 20px/1.35 Georgia,serif;margin:0 0 7px}
 .intake-receipt small{overflow-wrap:anywhere;color:#675a52}
+
+.delivery{margin-bottom:18px;border-top:5px solid #94aa9c}.delivery h2{font:700 27px/1.25 Georgia,serif;margin:8px 0 18px}.delivery article{border-top:1px solid #d9cbb8;padding:14px 0}.delivery article h3{margin:0 0 10px}.delivery-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;max-width:85ch}.delivery-qa,.delivery-feedback{margin:14px 0}.delivery summary{cursor:pointer;font-weight:600}.delivery-feedback textarea{display:block;margin:8px 0;width:100%}
