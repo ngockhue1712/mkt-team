@@ -19,7 +19,7 @@ const infer=async({system,prompt,schema})=>{
   return 'Kết quả phòng số '+seen.length;
 };
 const step=async(action,feedback='',generate=infer)=>{const response=await runAgencyRequest(new Request('https://mkt.example/api/work',{
-  method:'POST',headers:{origin:'https://mkt.example','content-type':'application/json'},body:JSON.stringify({id,action,feedback})
+  method:'POST',headers:{origin:'https://mkt.example','content-type':'application/json'},body:JSON.stringify({id,action,feedback,version:1})
 }),{storage,infer:generate});return {code:response.status,...await response.json()};};
 assert.equal((await step('approve')).code,409);
 let resolveStart,release;

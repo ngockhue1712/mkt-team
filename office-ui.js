@@ -58,7 +58,7 @@ function intakePanel(order) {
       esc(destination) + ' lúc ' + esc(new Date(order.receivedAt).toLocaleString('vi-VN')) +
       '.</p><small>Mã brief · ' + esc(order.id) + '</small>' +
       (order.status === 'received' ? '<p>Brief đã sẵn sàng để các phòng thực hiện.</p><button class="btn primary" id="runOffice">Thực hiện brief này</button>' :
-        order.engine==='office' && order.status==='running' ? '<p role="status">Đang thực hiện · '+esc(DEPTS[order.runningRole]?.name||'Account')+'. Kết quả từng phòng sẽ được lưu sau khi hoàn tất.</p>' : '') + '</section>';
+        order.engine==='office' && order.status==='running' ? '<p role="status">Đang thực hiện · '+esc(DEPTS[order.runningRole]?.name||'Account')+(order.runningRole==='content' && order.captions?.length?' · Đã viết '+order.captions.length+' caption':'')+'. Kết quả từng phòng sẽ được lưu sau khi hoàn tất.</p>' : '') + '</section>';
   }
   if (order.status === 'sending_brief') return '<div class="hint" role="status">Đang gửi brief đến agency…</div>';
   if (order.status === 'draft' || order.status === 'not_sent' || order.status === 'error') {
@@ -154,7 +154,7 @@ function outcomePanel(order) {
 
 function applyOfficeResult(order, job) {
   if (job.id !== order.id || !job.outputs || !Array.isArray(job.pipeline)) throw Error('Không đọc được bản bàn giao.');
-  for (const key of ['outputs','pipeline','status','calls','runningRole','version','approvedAt','error']) order[key]=job[key];
+  for (const key of ['outputs','pipeline','status','calls','runningRole','version','approvedAt','error','captions']) order[key]=job[key];
   order.engine='office';
   order.history=(job.history||[]).flatMap(version=>Object.entries(version.outputs).map(([role,output])=>({role,output,at:version.approvedAt||order.created})));
   if(job.outputs.qa) order.qaPassed=JSON.parse(job.outputs.qa).passed===true;
@@ -172,14 +172,14 @@ async function runOfficeOrder(order, action='advance', feedback='') {
     while(true) {
       const response=await fetch('/api/work',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({id:order.id,action:next,feedback}),signal:AbortSignal.timeout(310000)
+        body:JSON.stringify({id:order.id,action:next,feedback,version:order.version||1}),signal:AbortSignal.timeout(310000)
       });
       const body=await response.json().catch(()=>null);
       if(!response.ok || !body?.job)throw Error(body?.error || 'Kết nối bị ngắt. Có thể tiếp tục từ bước đã lưu.');
       applyOfficeResult(order,body.job);save();
       if(activeId===order.id){activeTab=order.runningRole||order.pipeline[1]||'brief';render();}
       if(order.status!=='running')break;
-      if(response.status===202)await new Promise(resolve=>setTimeout(resolve,5500));
+      if(response.status===202)await new Promise(resolve=>setTimeout(resolve,8500));
       next='advance';
     }
     if(order.status==='review')toast('Các phòng đã bàn giao. Mời bạn xem và duyệt.');
