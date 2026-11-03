@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {makePosters} from '../lib/poster.mjs';
+const brief={brief:'Tiệm Giấy Mơ đổi sách vào Chủ nhật. Poster vuông và story. Tiêu đề “Hẹn nhau đổi sách”. CTA là nhắn tin giữ chỗ.',brand:{}};
+const job={outputs:{creative:'Dùng tranh minh họa chồng sách.'}};
+const first=makePosters(brief,job);
+assert.deepEqual(first.map(a=>[a.width,a.height]),[[1080,1080],[1080,1920]]);
+assert.match(first[0].svg,/TIỆM GIẤY MƠ/u);assert.match(first[0].svg,/nhắn tin giữ chỗ/u);
+assert.match(first[0].alt,/^Poster sách /);assert.equal(first[0].title,'Hẹn nhau đổi sách');
+const changed=makePosters(brief,{...job,feedback:'Chỉ cần banner ngang, nền màu cam, đổi tiêu đề thành “Sách về tay mới”.'});
+assert.equal(changed.length,1);assert.equal(changed[0].width,1920);assert.match(changed[0].svg,/Sách về tay mới/);assert.match(changed[0].svg,/#F4AA57/);
+const unknown={brief:'Hình minh họa ngọn hải đăng.'},custom={subject:'custom',headline:'Hải đăng',silhouette:'M 10 90 L 45 10 L 60 12 L 95 90 Z'};
+assert.ok(makePosters(unknown,job,custom)[0].svg.includes(custom.silhouette));
+const hostile=makePosters({brief:'Tiêu đề “<script>alert(1)</script>”',brand:{name:'"><img onerror=x>'}},job,{subject:'custom',silhouette:'<script>bad()</script>'});
+assert.ok(!/<script|<img|foreignObject|xlink:href|<image/.test(hostile[0].svg));
+assert.ok(hostile[0].svg.includes('&lt;script&gt;'));
+console.log('PASS: rendered illustrations, social formats, case-preserved brand and CTA, revision overrides, custom artwork and SVG escaping.');

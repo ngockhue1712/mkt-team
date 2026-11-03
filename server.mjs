@@ -100,6 +100,7 @@ async function checkModelAccess(key, model) {
 
 export default {async fetch(request,env){
  const url=new URL(request.url);
+ if(request.method==='GET'&&url.pathname==='/assets/poster.mjs')return new Response(POSTER_MODULE,{headers:{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'}});
  if(request.method==='GET'&&url.pathname==='/assets/office-ui.js')return new Response(OFFICE_UI_JS,{headers:{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'}});
  if(request.method==='GET'&&url.pathname==='/assets/voxel-ui.css')return new Response(OFFICE_CSS,{headers:{'Content-Type':'text/css; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'}});
  if(request.method==='GET'&&url.pathname==='/assets/voxel-office.js')return new Response(OFFICE_JS,{headers:{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'}});

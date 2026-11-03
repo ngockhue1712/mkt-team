@@ -40,3 +40,15 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline-color:#94a79a
 .intake-receipt small{overflow-wrap:anywhere;color:#675a52}
 
 .delivery{margin-bottom:18px;border-top:5px solid #94aa9c}.delivery h2{font:700 27px/1.25 Georgia,serif;margin:8px 0 18px}.delivery article{border-top:1px solid #d9cbb8;padding:14px 0}.delivery article h3{margin:0 0 10px}.delivery-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;max-width:85ch}.delivery-qa,.delivery-feedback{margin:14px 0}.delivery summary{cursor:pointer;font-weight:600}.delivery-feedback textarea{display:block;margin:8px 0;width:100%}
+
+.poster-section{margin:22px 0 28px;padding:clamp(15px,3vw,28px);background:#f6f1e9;border:1px solid #d9cbbd;border-radius:18px}
+.poster-heading h3{font-size:clamp(21px,2.8vw,30px);margin:5px 0 15px}
+.poster-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,255px),1fr));gap:18px;align-items:start}
+.poster-card{margin:0;min-width:0;max-width:650px}
+.poster-preview{display:block;border:0;border-radius:12px;background:#e9e0d4;overflow:hidden;padding:0;width:100%;cursor:zoom-in}
+.poster-preview img{display:block;margin:auto;width:100%;height:auto;max-height:510px;object-fit:contain}
+.poster-card figcaption,.poster-dialog>div{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.poster-card figcaption{margin:12px 0 9px;flex-wrap:wrap}.poster-card figcaption span{font-size:13px;color:#61554e}
+.poster-actions{display:flex;gap:8px;flex-wrap:wrap}.poster-section>#artFeedback{margin-top:18px}
+.poster-dialog{max-width:94vw;max-height:95dvh;padding:12px;border:1px solid #c6b9ab;border-radius:14px;background:#f7f1e9;color:#432f32}
+.poster-dialog::backdrop{background:#251c20b8}.poster-dialog>div{margin-bottom:8px}.poster-dialog img{display:block;max-width:88vw;max-height:80dvh;object-fit:contain}

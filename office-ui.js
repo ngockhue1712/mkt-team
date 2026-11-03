@@ -58,7 +58,7 @@ function intakePanel(order) {
       esc(destination) + ' lúc ' + esc(new Date(order.receivedAt).toLocaleString('vi-VN')) +
       '.</p><small>Mã brief · ' + esc(order.id) + '</small>' +
       (order.status === 'received' ? '<p role="status">Agency đang tiếp nhận công việc.</p>' :
-        order.engine==='office' && order.status==='running' ? '<p role="status">Đang thực hiện · '+esc(DEPTS[order.runningRole]?.name||'Account')+(order.runningRole==='content' && order.captions?.length?' · Đã viết '+order.captions.length+' caption':'')+(order.background?'. Bạn có thể đóng trang. Mở lại Order trên trình duyệt này để xem kết quả.</p>':'. Kết quả từng phòng sẽ được lưu sau khi hoàn tất.</p>') : '') + '</section>';
+        order.engine==='office' && order.status==='running' ? '<p role="status">Đang thực hiện · '+esc(order.runningRole==='artwork'?'Studio hình ảnh':DEPTS[order.runningRole]?.name||'Account')+(order.runningRole==='content' && order.captions?.length?' · Đã viết '+order.captions.length+' caption':'')+(order.background?'. Bạn có thể đóng trang. Mở lại Order trên trình duyệt này để xem kết quả.</p>':'. Kết quả từng phòng sẽ được lưu sau khi hoàn tất.</p>') : '') + '</section>';
   }
   if (order.status === 'sending_brief') return '<div class="hint" role="status">Đang gửi brief đến agency…</div>';
   if (order.status === 'draft' || order.status === 'not_sent' || order.status === 'error') {
@@ -128,6 +128,7 @@ async function submitOrder(values){
   return o;
 }
 function bindOffice(){
+  bindPosters();
   for(const [id,scope] of [['quickAgency','home'],['quickRoom',selectedRoom]]){
     const form=document.getElementById(id);if(!form||!scope)continue;
     form.oninput=()=>{captureQuickDrafts();save();};
@@ -138,6 +139,56 @@ function bindOffice(){
 }
 function workRole(department){return department==='account'?'account_work':department==='qa'?'qa_work':department;}
 
+function posterURL(art) {
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(art.svg);
+}
+function posterSection(order) {
+  if(!order.artwork?.length)return '';
+  return '<section class="poster-section" aria-label="Ấn phẩm hình ảnh"><div class="poster-heading"><span class="eyebrow">CREATIVE STUDIO</span><h3>Ấn phẩm hình ảnh</h3></div>'+
+    (order.supplementaryArt?'<p>Hình minh họa được bổ sung sau lần duyệt trước.</p>':'')+
+    '<div class="poster-gallery">'+order.artwork.map((art,i)=>'<figure class="poster-card"><button type="button" class="poster-preview" data-zoom-art="'+i+'" aria-label="Xem lớn '+esc(art.name)+'"><img src="'+posterURL(art)+'" alt="'+esc(art.alt)+'"></button><figcaption><strong>'+esc(art.name)+'</strong><span>'+esc(art.width)+' × '+esc(art.height)+' px</span></figcaption><div class="poster-actions"><button type="button" class="btn small" data-zoom-art="'+i+'">Xem lớn</button><button type="button" class="btn primary small" data-save-art="'+i+'">Tải PNG</button></div></figure>').join('')+
+    '</div><button type="button" class="btn small" id="artFeedback">Góp ý hình ảnh</button></section>';
+}
+async function savePoster(order,index,button) {
+  const art=order.artwork[index];
+  if(!art || button.disabled)return;
+  button.disabled=true;
+  try {
+    const bitmap=new Image();bitmap.src=posterURL(art);await bitmap.decode();
+    const canvas=document.createElement('canvas');canvas.width=art.width;canvas.height=art.height;
+    canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(!blob)throw Error('png');
+    const url=URL.createObjectURL(blob),link=document.createElement('a');
+    link.href=url;link.download='mkt-'+order.id.slice(0,8)+'-v'+(order.version||1)+'-'+art.width+'x'+art.height+'.png';
+    document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  } catch {toast('Chưa xuất được PNG. Hãy thử lại.');}
+  finally {button.disabled=false;}
+}
+function bindPosters(){
+  const order=current();
+  if(route!=='detail'||!order)return;
+  if(!order.artwork?.length && !hasAgencyInbox() && order.outputs.qa && ['review','approved'].includes(order.status)) {
+    import('/assets/poster.mjs').then(({makePosters})=>{
+      if(order.artwork?.length || !['review','approved'].includes(order.status))return;
+      order.artwork=makePosters(order,order);save();if(route==='detail'&&activeId===order.id)render();
+    }).catch(()=>toast('Chưa tải được hình minh họa.'));
+  }
+  document.querySelectorAll('[data-zoom-art]').forEach(button=>button.onclick=()=>{
+    const art=order.artwork[Number(button.dataset.zoomArt)],dialog=document.createElement('dialog');
+    dialog.className='poster-dialog';
+    dialog.innerHTML='<div><strong>'+esc(art.name)+'</strong><button type="button" class="btn small">Đóng</button></div><img alt="'+esc(art.alt)+'" src="'+posterURL(art)+'">';
+    document.body.append(dialog);dialog.querySelector('button').onclick=()=>dialog.close();
+    dialog.addEventListener('close',()=>{dialog.remove();button.focus();},{once:true});dialog.showModal();
+  });
+  document.querySelectorAll('[data-save-art]').forEach(button=>button.onclick=()=>savePoster(order,Number(button.dataset.saveArt),button));
+  const feedback=document.getElementById('artFeedback');
+  if(feedback)feedback.onclick=()=>{
+    const input=document.getElementById('deliveryFeedback');input.closest('details').open=true;
+    input.placeholder='Ví dụ: đổi nền sang xanh lá và dùng tiêu đề “Hẹn nhau đổi sách”.';input.focus();
+  };
+}
+
 function outcomePanel(order) {
   if (!order.outputs.qa || !['review','approved'].includes(order.status)) return '';
   const roles = order.pipeline.filter(key => key !== 'account' && key !== 'qa');
@@ -145,7 +196,7 @@ function outcomePanel(order) {
   const issues = (qa.issues || []).filter(item=>item.issue!==qa.summary).map(item=>'<li>'+esc(item.issue)+'</li>').join('');
   return '<section class="panel delivery" aria-label="Bản bàn giao"><span class="eyebrow">BÀN GIAO · PHIÊN BẢN '+(order.version || 1)+'</span>' +
     '<h2>'+(order.status==='approved'?'Bản bạn đã duyệt':'Bản cuối chờ bạn duyệt')+'</h2>'+
-    roles.map(key=>'<article><h3>'+esc(DEPTS[key].name)+'</h3><div class="delivery-text">'+esc(order.outputs[key])+'</div></article>').join('')+
+    posterSection(order)+roles.map(key=>'<article><h3>'+esc(DEPTS[key].name)+'</h3><div class="delivery-text">'+esc(order.outputs[key])+'</div></article>').join('')+
     '<details class="delivery-qa"'+(issues?' open':'')+'><summary>QA · '+(qa.issues?.length?'Có góp ý trước khi sử dụng':'Đã rà soát')+'</summary><p>'+esc(qa.summary)+'</p>'+(issues?'<ul>'+issues+'</ul>':'')+'</details>'+
     (order.status==='approved'?'<p class="hint">Bạn đã duyệt bản này.</p>':'<button class="btn primary" id="approveDelivery">Duyệt bản này</button>')+
     '<details class="delivery-feedback"><summary>Yêu cầu chỉnh sửa</summary><label for="deliveryFeedback">Bạn muốn sửa phần nào?</label><textarea id="deliveryFeedback" maxlength="5000" placeholder="VD: Rút ngắn caption thứ hai và đổi lời kêu gọi hành động."></textarea><button class="btn small" id="reviseDelivery">Gửi phản hồi</button></details></section>';
@@ -153,7 +204,7 @@ function outcomePanel(order) {
 
 function applyOfficeResult(order, job) {
   if (job.id !== order.id || !job.outputs || !Array.isArray(job.pipeline)) throw Error('Không đọc được bản bàn giao.');
-  for (const key of ['outputs','pipeline','status','calls','runningRole','version','approvedAt','error','captions']) order[key]=job[key];
+  for (const key of ['outputs','pipeline','status','calls','runningRole','version','approvedAt','error','captions','artwork','supplementaryArt']) order[key]=job[key];
   order.engine='office';
   order.history=(job.history||[]).flatMap(version=>Object.entries(version.outputs).map(([role,output])=>({role,output,at:version.approvedAt||order.created})));
   if(job.outputs.qa) order.qaPassed=JSON.parse(job.outputs.qa).passed===true;

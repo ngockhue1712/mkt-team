@@ -37,7 +37,7 @@ ui.html giữ điều phối và màn hình order; office-ui.js xử lý Home/fo
 
 Ở bản Worker dùng OpenAI riêng, tab cần mở để điều phối. Trên Vercel production, máy chủ tự chạy công việc sau khi nhận brief. Đóng tab có thể tiếp tục từ bước thiếu. Deadline là thông tin brief. Dữ liệu trên trình duyệt này, chưa đồng bộ nhiều máy; xuất bản sao thường xuyên.
 
-Creative tạo concept, art direction, brief và prompt, chưa render ảnh/video. Research chưa duyệt web, phải đánh dấu giả thuyết. Chưa tích hợp đăng bài/chạy ads/đọc PDF. Không giả lập các tính năng đó bằng kết quả mẫu.
+Creative tạo concept và hướng dẫn thiết kế. Bản bàn giao hiển thị poster minh họa theo brief, hỗ trợ xem lớn và tải PNG. Hình là đồ họa vector, chưa hỗ trợ tạo ảnh chụp hoặc video. Research chưa duyệt web, phải đánh dấu giả thuyết. Chưa tích hợp đăng bài/chạy ads/đọc PDF. Không giả lập các tính năng đó bằng kết quả mẫu.
 
 Kiểm thử dùng mock tại ranh giới AI để xác nhận điều phối, chưa xác nhận chất lượng đầu ra hay quyền API thật. Cần key hợp lệ để kiểm thử đầu cuối. Chỉ triển khai cho một người dùng hoặc sau xác thực của host; không đưa API có key server ra công chúng.
 
