@@ -4,11 +4,14 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/compose.mjs && node scripts/dev.mjs",
-    "test": "node scripts/test.mjs && node scripts/test-inbox.mjs",
+    "test": "node scripts/test.mjs && node scripts/test-inbox.mjs && node scripts/test-departments.mjs",
     "build": "bash scripts/build.sh",
     "validate": "node scripts/validate-artifact.mjs"
   },
   "dependencies": {
-    "@vercel/blob": "2.8.2"
+    "@vercel/blob": "2.8.2",
+    "node-llama-cpp": "3.22.2",
+    "@node-llama-cpp/linux-x64": "3.22.2",
+    "@vercel/functions": "^3.0.0"
   }
 }

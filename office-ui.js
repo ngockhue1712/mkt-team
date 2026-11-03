@@ -47,17 +47,18 @@ function hasAgencyInbox() {
   return document.documentElement?.dataset?.briefInbox === 'remote';
 }
 function intakeNote() {
-  return hasAgencyInbox() ? '<p class="muted intake-note">Brief được gửi đến hộp nhận riêng của agency. Không cần API key.</p>' : '';
+  return hasAgencyInbox() ? '<p class="muted intake-note">Brief được gửi đến hộp nhận riêng của agency. Các phòng sẽ thực hiện và gửi bản bàn giao để bạn duyệt.</p>' : '';
 }
 function intakePanel(order) {
   if (!hasAgencyInbox()) return '';
   const destination = order.mode === 'single' ? 'phòng ' + ROOM_NAMES[order.department] : 'toàn agency';
+  if (order.engine==='office' && ['review','approved'].includes(order.status)) return '';
   if (order.receivedAt) {
     return '<section class="panel intake-receipt" aria-label="Biên nhận brief"><h2>Agency đã nhận brief</h2><p>Đã gửi đến ' +
       esc(destination) + ' lúc ' + esc(new Date(order.receivedAt).toLocaleString('vi-VN')) +
       '.</p><small>Mã brief · ' + esc(order.id) + '</small>' +
-      (order.status === 'received' ? '<p>Brief đang chờ xử lý. Bạn có thể xem lại trong mục Order.</p><button class="btn small" id="copyHandoff">Sao chép yêu cầu cho ChatGPT</button>' +
-        (apiKey || serverConfigured ? ' <button class="btn small" id="startDraft">Chạy bằng AI đã kết nối</button>' : '') : '') + '</section>';
+      (order.status === 'received' ? '<p>Brief đã sẵn sàng để các phòng thực hiện.</p><button class="btn primary" id="runOffice">Thực hiện brief này</button>' :
+        order.engine==='office' && order.status==='running' ? '<p role="status">Đang thực hiện · '+esc(DEPTS[order.runningRole]?.name||'Account')+(order.runningRole==='content' && order.captions?.length?' · Đã viết '+order.captions.length+' caption':'')+'. Kết quả từng phòng sẽ được lưu sau khi hoàn tất.</p>' : '') + '</section>';
   }
   if (order.status === 'sending_brief') return '<div class="hint" role="status">Đang gửi brief đến agency…</div>';
   if (order.status === 'draft' || order.status === 'not_sent' || order.status === 'error') {
@@ -87,6 +88,7 @@ async function sendAgencyBrief(order) {
     if (!response.ok) throw new Error(receipt.error || 'Chưa nhận được biên nhận.');
     if (receipt.id !== order.id || !Number.isFinite(Date.parse(receipt.receivedAt))) throw new Error('Biên nhận không hợp lệ.');
     order.receivedAt = receipt.receivedAt;
+    order.workToken = receipt.workToken;
     order.status = 'received';
     received = true;
   } catch (error) {
@@ -100,7 +102,10 @@ async function sendAgencyBrief(order) {
   }
   if (received) {
     toast('Agency đã nhận brief ' + order.id.slice(0, 8).toUpperCase() + '.');
-    if (!busy && (apiKey || serverConfigured)) await execute(order);
+    if (!busy) {
+      if (apiKey || serverConfigured) await execute(order);
+      else await runOfficeOrder(order);
+    }
   }
 }
 async function copyForChat(order) {
@@ -134,3 +139,63 @@ function bindOffice(){
   initOffice();
 }
 function workRole(department){return department==='account'?'account_work':department==='qa'?'qa_work':department;}
+
+function outcomePanel(order) {
+  if (!order.outputs.qa || !['review','approved'].includes(order.status)) return '';
+  const roles = order.pipeline.filter(key => key !== 'account' && key !== 'qa');
+  const qa = JSON.parse(order.outputs.qa);
+  const issues = (qa.issues || []).map(item=>'<li>'+esc(item.issue)+'</li>').join('');
+  return '<section class="panel delivery" aria-label="Bản bàn giao"><span class="eyebrow">BÀN GIAO · PHIÊN BẢN '+(order.version || 1)+'</span>' +
+    '<h2>'+(order.status==='approved'?'Bản bạn đã duyệt':'Bản cuối chờ bạn duyệt')+'</h2>'+
+    roles.map(key=>'<article><h3>'+esc(DEPTS[key].name)+'</h3><div class="delivery-text">'+esc(order.outputs[key])+'</div></article>').join('')+
+    '<details class="delivery-qa"'+(issues?' open':'')+'><summary>QA · '+(issues?'Có góp ý trước khi sử dụng':'Đã rà soát')+'</summary><p>'+esc(qa.summary)+'</p>'+(issues?'<ul>'+issues+'</ul>':'')+'</details>'+
+    (order.status==='approved'?'<p class="hint">Bạn đã duyệt bản này.</p>':'<button class="btn primary" id="approveDelivery">Duyệt bản này</button>')+
+    '<details class="delivery-feedback"><summary>Yêu cầu chỉnh sửa</summary><label for="deliveryFeedback">Bạn muốn sửa phần nào?</label><textarea id="deliveryFeedback" maxlength="5000" placeholder="VD: Rút ngắn caption thứ hai và đổi lời kêu gọi hành động."></textarea><button class="btn small" id="reviseDelivery">Gửi phản hồi</button></details></section>';
+}
+
+function applyOfficeResult(order, job) {
+  if (job.id !== order.id || !job.outputs || !Array.isArray(job.pipeline)) throw Error('Không đọc được bản bàn giao.');
+  for (const key of ['outputs','pipeline','status','calls','runningRole','version','approvedAt','error','captions']) order[key]=job[key];
+  order.engine='office';
+  order.history=(job.history||[]).flatMap(version=>Object.entries(version.outputs).map(([role,output])=>({role,output,at:version.approvedAt||order.created})));
+  if(job.outputs.qa) order.qaPassed=JSON.parse(job.outputs.qa).passed===true;
+}
+
+async function runOfficeOrder(order, action='advance', feedback='') {
+  if (busy || !order?.receivedAt) return;
+  busy=true;
+  order.engine='office';
+  order.error=null;
+  if(action==='advance') {order.status='running';order.runningRole=order.pipeline.find(k=>!order.outputs[k])||'account';}
+  save();render();
+  try {
+    if(!order.workToken){
+      // Historical receipts predate work tokens. Re-present the unchanged original brief.
+      const fields=['id','mode','department','title','brief','deliverables','deadline','budget','reference','brand'];
+      const renewed=await fetch('/api/briefs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fields.map(k=>[k,order[k]])))});
+      const receipt=await renewed.json();
+      if(!renewed.ok || !receipt.workToken || receipt.id!==order.id)throw Error('Không xác minh được brief gốc trên thiết bị này.');
+      order.workToken=receipt.workToken;save();
+    }
+    let next=action;
+    while(true) {
+      const response=await fetch('/api/work',{
+        method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+order.workToken},
+        body:JSON.stringify({id:order.id,action:next,feedback,version:order.version||1}),signal:AbortSignal.timeout(310000)
+      });
+      const body=await response.json().catch(()=>null);
+      if(!response.ok || !body?.job)throw Error(body?.error || 'Kết nối bị ngắt. Có thể tiếp tục từ bước đã lưu.');
+      applyOfficeResult(order,body.job);save();
+      if(activeId===order.id){activeTab=order.runningRole||order.pipeline[1]||'brief';render();}
+      if(order.status!=='running')break;
+      if(response.status===202)await new Promise(resolve=>setTimeout(resolve,8500));
+      next='advance';
+    }
+    if(order.status==='review')toast('Các phòng đã bàn giao. Mời bạn xem và duyệt.');
+    if(order.status==='approved')toast('Đã lưu quyết định duyệt.');
+  } catch(error) {
+    order.status='error';order.runningRole=null;order.error=error.message;
+  } finally {
+    busy=false;save();if(activeId===order.id)render();
+  }
+}

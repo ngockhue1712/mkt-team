@@ -3,10 +3,33 @@
   "framework": null,
   "buildCommand": "node scripts/build-vercel.mjs",
   "outputDirectory": "public",
-  "functions": { "api/*.js": { "maxDuration": 150 } },
-  "headers": [{ "source": "/(.*)", "headers": [
-    {"key":"X-Content-Type-Options","value":"nosniff"},
-    {"key":"Referrer-Policy","value":"no-referrer"},
-    {"key":"X-Frame-Options","value":"DENY"}
-  ] }]
+  "functions": {
+    "api/work.js": {
+      "maxDuration": 300,
+      "includeFiles": "{lib/memfile,node_modules/@node-llama-cpp/linux-x64/bins/**}"
+    },
+    "api/{generate,status,connection,briefs}.js": {
+      "maxDuration": 150
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        }
+      ]
+    }
+  ],
+  "installCommand": "npm install --omit=optional --ignore-scripts --no-audit --no-fund"
 }

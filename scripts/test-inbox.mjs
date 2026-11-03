@@ -46,11 +46,12 @@ const app = {
   localStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},
   fetch: async (path, options) => {
     if(path==='/api/status') return Response.json({configured:false});
-    assert.equal(path,'/api/briefs','keyless submissions never call the generation API');
+    if(path==='/api/work'){const {id}=JSON.parse(options.body);return Response.json({job:{id,version:1,status:'review',pipeline:['account','content','qa'],outputs:{account:'{}',content:'Đầu ra kiểm thử',qa:'{"passed":true,"issues":[]}'},calls:3,history:[]}});}
+    assert.equal(path,'/api/briefs','keyless submissions never call the BYOK generation API');
     if(!statusAccepted) throw new TypeError('offline');
     const result = await receiveBrief(request(JSON.parse(options.body)),storage);
     if(dropResponse) {dropResponse=false;throw new TypeError('response lost');}
-    return result;
+    return result.ok ? Response.json({...await result.json(),workToken:"test-only-work-token"},{status:result.status}) : result;
   }
 };
 vm.createContext(app);
@@ -59,8 +60,8 @@ vm.runInContext("render=()=>{}; toast=()=>{}; openConnection=()=>{throw Error('U
 for(const department of ['account','strategy','content','creative','performance','qa']){
   app.department=department;
   const order=await vm.runInContext("submitOrder({mode:'single',department,brief:'Kiểm tra giao việc',draftScope:department})",app);
-  assert.equal(order.status,'received');
-  assert.equal(order.calls,0);
+  assert.equal(order.status,'review');
+  assert.equal(order.calls,3);
   assert.ok(order.receivedAt);
 }
 dropResponse=true;
@@ -68,7 +69,7 @@ const order=await vm.runInContext("submitOrder({mode:'full',brief:'Bộ sưu t�
 assert.equal(order.status,'not_sent');
 const rowsBeforeRetry=rows.size;
 await vm.runInContext("Promise.all([sendAgencyBrief(state.orders[0]),sendAgencyBrief(state.orders[0])])",app);
-assert.equal(order.status,'received');
+assert.equal(order.status,'review');
 assert.equal(rows.size,rowsBeforeRetry);
 assert.ok(JSON.parse(saved.get('mkt-studio-v1')).orders[0].receivedAt);
 statusAccepted=false;
